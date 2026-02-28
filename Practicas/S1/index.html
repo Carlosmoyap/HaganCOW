@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Paradise</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- Encabezado -->
+    <header class="header-flex">
+        <div class="header-left">
+            <h1>Hotel Paradise</h1>
+            <nav>
+                <a href="#inicio">Inicio</a> |
+                <a href="#habitaciones">Habitaciones</a> |
+                <a href="#servicios">Servicios</a> |
+                <a href="#contacto">Contacto</a>
+            </nav>
+            <br>
+            <!-- Buscador de Google y Wikipedia -->
+            <div class="busqueda-externa">
+                <h3>Buscadores Externos</h3>
+                <!-- Formulario para Google (GET) -->
+                <form action="https://www.google.com/search" method="GET" target="_blank">
+                    <label for="google-search">Google:</label>
+                    <input type="text" name="q" id="google-search" placeholder="Buscar en Google...">
+                    <input type="submit" value="Buscar en Google">
+                </form>
+                <!-- Formulario para Wikipedia (GET) -->
+                <form action="https://es.wikipedia.org/w/index.php" method="GET" target="_blank">
+                    <label for="wiki-search">Wikipedia:</label>
+                    <input type="text" name="search" id="wiki-search" placeholder="Buscar en Wikipedia...">
+                    <input type="submit" value="Buscar en Wikipedia">
+                </form>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="#signup" class="btn-signup">Inicio sesión</a>
+        </div>
+    </header>
+
+    <!-- Sección Hero (Principal) -->
+    <section id="inicio" class="hero">
+        <h1>Bienvenido a Hotel Paradise</h1>
+        <p>Tu descanso soñado comienza aquí.</p>
+        <!-- Formulario de reserva con fechas -->
+        <form class="form-reserva">
+            <label for="entrada">Ciudad</label>
+            <input type="search" id="ciudad" name="ciudad">
+            <label for="entrada">Fecha de entrada:</label>
+            <input type="date" id="entrada" name="entrada">
+            <label for="salida">Fecha de salida:</label>
+            <input type="date" id="salida" name="salida">
+            <button type="submit" class="btn-reservar">Reservar</button>
+        </form>
+        <br>
+        <img src="images/hotel1.jpg" alt="Vista panorámica del hotel">
+    </section>
+
+    <!-- Sección de Habitaciones -->
+    <section id="habitaciones">
+        <h2>Nuestras Habitaciones</h2>
+        <div class="habitacion-grid">
+            <article class="habitacion">
+                <img src="https://placehold.co/300x200?text=Suite+Lujo" alt="Suite de Lujo">
+                <h3>Suite de Lujo</h3>
+                <p>Espaciosa suite con vistas al mar.</p>
+                <a href="#">Ver detalles</a>
+            </article>
+            <article class="habitacion">
+                <img src="https://placehold.co/300x200?text=Habitacion+Doble" alt="Habitación Doble">
+                <h3>Habitación Doble</h3>
+                <p>Perfecta para parejas.</p>
+                <a href="#">Ver detalles</a>
+            </article>
+            <article class="habitacion">
+                <img src="https://placehold.co/300x200?text=Habitacion+Simple" alt="Habitación Simple">
+                <h3>Habitación Simple</h3>
+                <p>Comodidad para viajeros solitarios.</p>
+                <a href="#">Ver detalles</a>
+            </article>
+        </div>
+    </section>
+
+    <!-- Pie de Página -->
+    <footer id="contacto">
+        <p>Contacto: info@hotelparadise.com | Tel: +34 123 456 789</p>
+        <p>Síguenos en nuestras redes sociales:</p>
+        <div class="social-links">
+            <a href="https://facebook.com">Facebook</a> | 
+            <a href="https://instagram.com">Instagram</a>
+        </div>
+        <p>&copy; 2024 Hotel Paradise. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

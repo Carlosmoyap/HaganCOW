@@ -1,0 +1,24 @@
+div#test-accordion{
+    margin: 10px;
+    border: 1px solid #aaa;
+}
+
+div.accordion {
+	position: relative; /* required for bounding */
+}
+
+div.accordion-toggle{
+    position: relative; /* required for effect */
+    z-index: 10;		/* required for effect */
+	background: #eee;   
+    cursor: pointer;
+}
+
+div.accordion-toggle-active{
+	background: #fff;	
+}
+
+div.accordion-content{
+    overflow: hidden;	/* required for effect */
+    background: #aaa;
+}
