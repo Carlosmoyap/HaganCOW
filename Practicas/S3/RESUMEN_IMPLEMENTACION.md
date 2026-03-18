@@ -1,6 +1,16 @@
 # RESUMEN D'IMPLEMENTACIÓ - PRÀCTICA S3
 ## Sistema de Reserves d'Hotel amb PHP
 
+## ACTUALITZACIÓ BASE DE DADES (PhpMyAdmin + world.sql)
+
+Implementació actual adaptada a la Sessio 3:
+
+- Lectura de ciutats des de la taula `cities` de la base `world` a `client.php`.
+- Inserció de reserves a la taula `clients_reserves` des de `server.php`.
+- Lectura de reserves recents a `server.php` per mostrar resultats de consulta SQL.
+- Validació de la ciutat seleccionada contra la BD (per `id`) abans d'inserir.
+- Part opcional implementada: creació/visualització de taula `hotels` a `client.php`.
+
 ---
 
 ## ✅ VERIFICACIÓ DE REQUISITS

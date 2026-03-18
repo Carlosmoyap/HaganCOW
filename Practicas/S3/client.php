@@ -1,3 +1,61 @@
+<?php
+/*
+ * Connexio directa a MySQL des de client.php (sense fitxer extern de BD).
+ * Es carrega la llista de ciutats de world.cities i, opcionalment, la taula hotels.
+ */
+$dbHost = '127.0.0.1';
+$dbUser = 'root';
+$dbPass = '';
+$dbName = 'world';
+
+$cities = array();
+$hotels = array();
+$dbWarning = '';
+
+$conn = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+if ($conn->connect_error) {
+    $dbWarning = 'No s\'ha pogut connectar a la base de dades world. Revisa la configuracio de MySQL/XAMPP.';
+} else {
+    $conn->set_charset('utf8mb4');
+
+    // Taula opcional de hotels (part opcional de la practica)
+    $sqlHotels = "CREATE TABLE IF NOT EXISTS hotels (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(120) NOT NULL UNIQUE,
+        city_name VARCHAR(120) NOT NULL,
+        stars TINYINT NOT NULL,
+        has_pool TINYINT(1) NOT NULL DEFAULT 0,
+        has_spa TINYINT(1) NOT NULL DEFAULT 0,
+        has_gym TINYINT(1) NOT NULL DEFAULT 0,
+        price_per_night DECIMAL(10,2) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sqlHotels);
+
+    // Seed minim per mostrar informació d'hotels a client.php
+    $conn->query("INSERT IGNORE INTO hotels (name, city_name, stars, has_pool, has_spa, has_gym, price_per_night) VALUES
+        ('Hotel Paradise Barcelona', 'Barcelona', 4, 1, 1, 1, 145.00),
+        ('Grand Lisbon Center', 'Lisboa', 5, 1, 1, 1, 210.00),
+        ('Roma Riverside Stay', 'Roma', 3, 0, 0, 1, 98.00)");
+
+    $resCities = $conn->query("SELECT id, name, country_code FROM cities ORDER BY name LIMIT 500");
+    if ($resCities) {
+        while ($row = $resCities->fetch_assoc()) {
+            $cities[] = $row;
+        }
+        $resCities->free();
+    }
+
+    $resHotels = $conn->query("SELECT name, city_name, stars, has_pool, has_spa, has_gym, price_per_night FROM hotels ORDER BY stars DESC, name ASC");
+    if ($resHotels) {
+        while ($row = $resHotels->fetch_assoc()) {
+            $hotels[] = $row;
+        }
+        $resHotels->free();
+    }
+
+    $conn->close();
+}
+?>
 <!--
     CLIENT.PHP - PÀGINA DE RESERVA D'HOTEL
     
@@ -45,6 +103,48 @@
                 <p class="lead">Completa el formulari per confirmar la teva reserva</p>
             </div>
 
+            <?php if (!empty($dbWarning)) { ?>
+                <div class="alert alert-warning">
+                    <?php echo htmlspecialchars($dbWarning); ?>
+                </div>
+            <?php } ?>
+
+            <?php if (!empty($hotels)) { ?>
+                <div class="panel panel-info" style="margin-bottom: 25px;">
+                    <div class="panel-heading">
+                        <strong>Hotels disponibles (part opcional)</strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-condensed" style="margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th>Hotel</th>
+                                    <th>Ciutat</th>
+                                    <th>Estrelles</th>
+                                    <th>Piscina</th>
+                                    <th>Spa</th>
+                                    <th>Gimnàs</th>
+                                    <th>Preu/Nit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($hotels as $hotel) { ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($hotel['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($hotel['city_name']); ?></td>
+                                        <td><?php echo (int)$hotel['stars']; ?></td>
+                                        <td><?php echo ((int)$hotel['has_pool'] === 1) ? 'Si' : 'No'; ?></td>
+                                        <td><?php echo ((int)$hotel['has_spa'] === 1) ? 'Si' : 'No'; ?></td>
+                                        <td><?php echo ((int)$hotel['has_gym'] === 1) ? 'Si' : 'No'; ?></td>
+                                        <td><?php echo number_format((float)$hotel['price_per_night'], 2); ?> EUR</td>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php } ?>
+
             <!-- 
                 FORMULARI DE RESERVA
                 Requisit 2: Formulari amb diversos controls i botons
@@ -79,15 +179,11 @@
                     <label for="ciutat">Ciutat de Destinació <span class="required">*</span></label>
                     <select class="form-control" id="ciutat" name="ciutat" required>
                         <option value="">Selecciona una ciutat</option>
-                        <option value="Barcelona">Barcelona</option>
-                        <option value="Madrid">Madrid</option>
-                        <option value="València">València</option>
-                        <option value="Sevilla">Sevilla</option>
-                        <option value="Màlaga">Màlaga</option>
-                        <option value="Palma">Palma de Mallorca</option>
-                        <option value="Lisboa">Lisboa</option>
-                        <option value="Paris">Paris</option>
-                        <option value="Roma">Roma</option>
+                        <?php foreach ($cities as $city) { ?>
+                            <option value="<?php echo (int)$city['id']; ?>">
+                                <?php echo htmlspecialchars($city['name'] . ' (' . $city['country_code'] . ')'); ?>
+                            </option>
+                        <?php } ?>
                     </select>
                     <span class="error" id="errorCiutat">Selecciona una ciutat</span>
                 </div>

@@ -52,6 +52,42 @@
 $errors = array();
 $dadesReserva = array();
 
+// Connexio directa a MySQL des de server.php (sense fitxer extern de BD)
+$dbHost = '127.0.0.1';
+$dbUser = 'root';
+$dbPass = '';
+$dbName = 'world';
+$dbWarning = '';
+$conn = @new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+if ($conn->connect_error) {
+    $dbWarning = 'No s\'ha pogut connectar a la base de dades world.';
+    $conn = null;
+} else {
+    $conn->set_charset('utf8mb4');
+    $sqlReserves = "CREATE TABLE IF NOT EXISTS clients_reserves (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        reservation_code VARCHAR(20) NOT NULL UNIQUE,
+        client_name VARCHAR(100) NOT NULL,
+        email VARCHAR(120) NOT NULL,
+        phone VARCHAR(25) NOT NULL,
+        city_id INT NOT NULL,
+        city_name VARCHAR(120) NOT NULL,
+        checkin_date DATE NOT NULL,
+        checkout_date DATE NOT NULL,
+        nights INT NOT NULL,
+        guests INT NOT NULL,
+        room_type VARCHAR(20) NOT NULL,
+        comments TEXT NULL,
+        total_price DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_city_id (city_id),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    if (!$conn->query($sqlReserves)) {
+        $dbWarning = 'No s\'ha pogut crear/verificar la taula clients_reserves.';
+    }
+}
+
 /*
  * COMPROVACIÓ DEL MÈTODE D'ENVIAMENT
  * Requisit 3: Verificar que les dades s'han enviat per POST
@@ -124,16 +160,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
-    // VALIDACIÓ DE LA CIUTAT
-    $ciutatsValides = array("Barcelona", "Madrid", "València", "Sevilla", "Màlaga", "Palma", "Lisboa", "Paris", "Roma");
+    // VALIDACIÓ DE LA CIUTAT (ara es valida contra world.cities)
     if (empty($_POST["ciutat"])) {
         $errors[] = "La ciutat és obligatòria";
     } else {
-        $ciutat = neteja_dades($_POST["ciutat"]);
-        if (!in_array($ciutat, $ciutatsValides)) {
+        $cityId = neteja_dades($_POST["ciutat"]);
+        if (!ctype_digit($cityId)) {
             $errors[] = "La ciutat seleccionada no és vàlida";
+        } elseif ($conn === null) {
+            $errors[] = "No es pot validar la ciutat sense connexió a base de dades";
         } else {
-            $dadesReserva["ciutat"] = $ciutat;
+            $stmtCity = $conn->prepare("SELECT id, name, country_code FROM cities WHERE id = ? LIMIT 1");
+            if ($stmtCity) {
+                $cityIdInt = (int)$cityId;
+                $stmtCity->bind_param("i", $cityIdInt);
+                $stmtCity->execute();
+                $resultCity = $stmtCity->get_result();
+                if ($resultCity && $resultCity->num_rows > 0) {
+                    $cityRow = $resultCity->fetch_assoc();
+                    $dadesReserva["cityId"] = (int)$cityRow["id"];
+                    $dadesReserva["ciutat"] = $cityRow["name"];
+                    $dadesReserva["countryCode"] = $cityRow["country_code"];
+                } else {
+                    $errors[] = "La ciutat seleccionada no existeix a la base de dades";
+                }
+                if ($resultCity) {
+                    $resultCity->free();
+                }
+                $stmtCity->close();
+            } else {
+                $errors[] = "Error intern validant la ciutat";
+            }
         }
     }
     
@@ -153,6 +210,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } elseif ($dateSortida <= $dateEntrada) {
             $errors[] = "La data de sortida ha de ser posterior a la data d'entrada";
         } else {
+            $dadesReserva["dataEntradaDB"] = date("Y-m-d", $dateEntrada);
+            $dadesReserva["dataSortidaDB"] = date("Y-m-d", $dateSortida);
             $dadesReserva["dataEntrada"] = date("d/m/Y", $dateEntrada);
             $dadesReserva["dataSortida"] = date("d/m/Y", $dateSortida);
             
@@ -211,6 +270,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         $preuTotal = $preuBase * $dadesReserva["nits"];
         $dadesReserva["preuTotal"] = $preuTotal;
+
+        // Inserir reserva a clients_reserves
+        $saveOk = false;
+        $saveMessage = '';
+        if ($conn === null) {
+            $saveMessage = 'Reserva validada, pero no s\'ha pogut guardar per falta de connexio a la base de dades.';
+        } else {
+            $insertSql = "INSERT INTO clients_reserves
+                (reservation_code, client_name, email, phone, city_id, city_name, checkin_date, checkout_date, nights, guests, room_type, comments, total_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $stmtInsert = $conn->prepare($insertSql);
+            if ($stmtInsert) {
+                $cityIdInsert = (int)$dadesReserva["cityId"];
+                $nitsInsert = (int)$dadesReserva["nits"];
+                $personesInsert = (int)$dadesReserva["persones"];
+                $comentarisInsert = isset($dadesReserva["comentaris"]) ? $dadesReserva["comentaris"] : null;
+                $preuInsert = (float)$preuTotal;
+
+                $stmtInsert->bind_param(
+                    "ssssisssiissd",
+                    $codiReserva,
+                    $dadesReserva["nom"],
+                    $dadesReserva["email"],
+                    $dadesReserva["telefon"],
+                    $cityIdInsert,
+                    $dadesReserva["ciutat"],
+                    $dadesReserva["dataEntradaDB"],
+                    $dadesReserva["dataSortidaDB"],
+                    $nitsInsert,
+                    $personesInsert,
+                    $dadesReserva["tipusHabitacio"],
+                    $comentarisInsert,
+                    $preuInsert
+                );
+
+                if ($stmtInsert->execute()) {
+                    $saveOk = true;
+                    $saveMessage = 'Reserva guardada correctament a la taula clients_reserves.';
+                } else {
+                    $saveMessage = 'La reserva es valida, pero no s\'ha pogut inserir a la base de dades.';
+                }
+                $stmtInsert->close();
+            } else {
+                $saveMessage = 'La reserva es valida, pero hi ha un error preparant la insercio SQL.';
+            }
+        }
         
         /*
          * MOSTRAR CONFIRMACIÓ DE RESERVA
@@ -230,6 +336,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo '<div class="alert alert-success alert-custom">';
         echo '<strong>Important:</strong> Guarda aquest codi per a futures consultes. T\'hem enviat un email de confirmació a <strong>' . $dadesReserva["email"] . '</strong>';
         echo '</div>';
+
+        if (!empty($dbWarning)) {
+            echo '<div class="alert alert-warning alert-custom">' . htmlspecialchars($dbWarning) . '</div>';
+        }
+
+        if ($saveOk) {
+            echo '<div class="alert alert-info alert-custom">' . htmlspecialchars($saveMessage) . '</div>';
+        } else {
+            echo '<div class="alert alert-warning alert-custom">' . htmlspecialchars($saveMessage) . '</div>';
+        }
         
         // Bloc de detalls de la reserva
         echo '<div class="info-reserva">';
@@ -254,13 +370,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         echo '<div class="info-item">';
         echo '<span class="info-label">Destinació:</span>';
-        echo '<span class="info-value"><strong>' . $dadesReserva["ciutat"] . '</strong></span>';
+        echo '<span class="info-value"><strong>' . $dadesReserva["ciutat"] . ' (' . $dadesReserva["countryCode"] . ')</strong></span>';
         echo '</div>';
         
         echo '<div class="info-item">';
         echo '<span class="info-label">Data d\'entrada:</span>';
         echo '<span class="info-value">' . $dadesReserva["dataEntrada"] . '</span>';
         echo '</div>';
+
+        // Mostrar ultimes reserves guardades (lectura de BD)
+        if ($conn !== null) {
+            $recentSql = "SELECT reservation_code, client_name, city_name, checkin_date, checkout_date, total_price
+                          FROM clients_reserves
+                          ORDER BY id DESC
+                          LIMIT 5";
+            $recentResult = $conn->query($recentSql);
+            if ($recentResult && $recentResult->num_rows > 0) {
+                echo '<div class="info-reserva" style="margin-top: 25px;">';
+                echo '<h3><span class="glyphicon glyphicon-time"></span> Ultimes reserves registrades</h3>';
+                echo '<div class="table-responsive">';
+                echo '<table class="table table-striped">';
+                echo '<thead><tr><th>Codi</th><th>Client</th><th>Ciutat</th><th>Entrada</th><th>Sortida</th><th>Total</th></tr></thead>';
+                echo '<tbody>';
+                while ($row = $recentResult->fetch_assoc()) {
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($row['reservation_code']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['client_name']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['city_name']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['checkin_date']) . '</td>';
+                    echo '<td>' . htmlspecialchars($row['checkout_date']) . '</td>';
+                    echo '<td>' . number_format((float)$row['total_price'], 2) . ' EUR</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody>';
+                echo '</table>';
+                echo '</div>';
+                echo '</div>';
+                $recentResult->free();
+            }
+        }
         
         echo '<div class="info-item">';
         echo '<span class="info-label">Data de sortida:</span>';
@@ -354,6 +502,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo '<span class="glyphicon glyphicon-home"></span> Anar al formulari de reserva';
     echo '</a>';
     echo '</div>';
+}
+
+if ($conn !== null) {
+    $conn->close();
 }
 ?>
 
