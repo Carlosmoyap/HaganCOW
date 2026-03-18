@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+    <!-- Head -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Paradise</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Encabezado -->
+    <header>
+        <div class="header-menu">
+            <h1>Hotel Paradise</h1>
+            <nav>
+                <h2><a href="#inicio">Buscar</a> | <a href="#ofertas">Ofertas</a> | <a href="#destinos">Destinos</a> | <a href="#contacto">Contacto</a></h2>
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Contenido Principal -->
+        <main>
+            <!-- Sección Hero (Principal) -->
+            <section id="inicio" class="hero">
+                <h1>Encuentra tu próximo alojamiento</h1>
+                <p>Busca ofertas en hoteles, casas y mucho más...</p>
+                <!-- Formulario de reserva con fechas -->
+                <form class="form-reserva">
+                    <label for="entrada">Destino</label>
+                    <input type="search" id="destino" name="destino">
+                    <label for="entrada">Fecha de entrada:</label>
+                    <input type="date" id="entrada" name="entrada">
+                    <label for="salida">Fecha de salida:</label>
+                    <input type="date" id="salida" name="salida">
+                    <button type="submit" class="btn-reservar">Reservar</button>
+                </form>
+                <br>
+            </section>
+
+            <!-- Sección de Ofertas Destacadas -->
+            <section id="ofertas">
+                <h2>Explora estas propiedades únicas</h2>
+                <div class="habitacion-grid">
+                    <article class="habitacion">
+                        <img src="images/hotel-espanya.jpg" alt="Hotel en Barcelona">
+                        <h3>Grand Hotel Central - BCN</h3>
+                        <p>Lujo en el corazón del Barrio Gótico.</p>
+                        <a href="#">Ver disponibilidad</a>
+                    </article>
+                    <article class="habitacion">
+                        <img src="images/hotel-paris.jpg" alt="Apartamento en París">
+                        <h3>Le Marais Apartment</h3>
+                        <p>Encanto parisino con vistas a la Torre Eiffel.</p>
+                        <a href="#">Ver disponibilidad</a>
+                    </article>
+                    <article class="habitacion">
+                        <img src="images/roma-hotel.jpg" alt="B&B en Roma">
+                        <h3>Roma Colosseo View</h3>
+                        <p>A solo 5 minutos del Coliseo a pie.</p>
+                        <a href="#">Ver disponibilidad</a>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Sección de Información y Precios -->
+            <section id="destinos">
+                <h2>Planifica tu viaje</h2>
+                <div class="info-content">
+                    <div class="servicios-lista">
+                        <h3>¿Por qué reservar con nosotros?</h3>
+                        <ul>
+                            <li>Precios igualados</li>
+                            <li>Cancelación GRATIS en la mayoría de habitaciones</li>
+                            <li>Atención al cliente 24/7</li>
+                            <li>Más de 2 millones de alojamientos</li>
+                            <li>Sin cargos de gestión</li>
+                        </ul>
+                    </div>
+
+                    <div class="tarifas-tabla">
+                        <h3>Precios medios por noche (Temporada actual)</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Destino</th>
+                                    <th>3 Estrellas</th>
+                                    <th>5 Estrellas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Barcelona</td>
+                                    <td>90€</td>
+                                    <td>250€</td>
+                                </tr>
+                                <tr>
+                                    <td>París</td>
+                                    <td>120€</td>
+                                    <td>400€</td>
+                                </tr>
+                                <tr>
+                                    <td>Roma</td>
+                                    <td>100€</td>
+                                    <td>320€</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Barra Lateral (Aside) -->
+        <aside class="sidebar">
+            <div class="busqueda-externa">
+                <h3>Buscadores Externos</h3>
+                <!-- Formulario para Google (GET) -->
+                <form action="https://www.google.com/search" method="GET" target="_blank">
+                    <label for="google-search">Google:</label>
+                    <input type="text" name="q" id="google-search" placeholder="Buscar en Google...">
+                    <input type="submit" value="Buscar en Google">
+                </form>
+                <!-- Formulario para Wikipedia (GET) -->
+                <form action="https://es.wikipedia.org/w/index.php" method="GET" target="_blank">
+                    <label for="wiki-search">Wikipedia:</label>
+                    <input type="text" name="search" id="wiki-search" placeholder="Buscar en Wikipedia...">
+                    <input type="submit" value="Buscar en Wikipedia">
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer id="contacto">
+        <p>Contacto: info@hotelparadise.com | Tel: +34 123 456 789</p>
+        <p>Síguenos en nuestras redes sociales:</p>
+        <div class="social-links">
+            <a href="https://facebook.com">Facebook</a> | 
+            <a href="https://instagram.com">Instagram</a>
+        </div>
+        <p>&copy; 2026 Hotel Paradise. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>
