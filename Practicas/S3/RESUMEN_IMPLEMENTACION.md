@@ -1,261 +1,250 @@
-# RESUMEN D'IMPLEMENTACIÓ - PRÀCTICA S3
-## Sistema de Reserves d'Hotel amb PHP
+# Memòria de la Pràctica S3 - Sistema de reserves d'hotel
 
-## ACTUALITZACIÓ BASE DE DADES (PhpMyAdmin + world.sql)
+## 1. Objectiu de la pràctica
+L'objectiu del projecte és desenvolupar una aplicació web de reserves d'hotel amb una part pública (portada) i una part funcional (formulari i confirmació), utilitzant PHP, MySQL, Bootstrap i validació de dades tant al client com al servidor.
 
-Implementació actual adaptada a la Sessio 3:
-
-- Lectura de ciutats des de la taula `cities` de la base `world` a `client.php`.
-- Inserció de reserves a la taula `clients_reserves` des de `server.php`.
-- Lectura de reserves recents a `server.php` per mostrar resultats de consulta SQL.
-- Validació de la ciutat seleccionada contra la BD (per `id`) abans d'inserir.
-- Part opcional implementada: creació/visualització de taula `hotels` a `client.php`.
+Aquesta memòria descriu el funcionament del projecte des del punt de vista de l'usuari i de la lògica de negoci, de manera que es pugui entendre el sistema sense necessitat de revisar el codi font.
 
 ---
 
-## ✅ VERIFICACIÓ DE REQUISITS
+## 2. Característiques principals del lloc web
 
-### **Requisit 1: Dues pàgines web PHP (8pts)**
-✅ **COMPLERT**
+### 2.1. Estructura general
+El lloc web està organitzat en tres pantalles principals:
 
-#### **client.php** - Pàgina de Reserva
-- Pàgina PHP que mostra el formulari per efectuar una reserva d'hotel
-- Permet a l'usuari seleccionar la ciutat de destinació
-- Inclou validació client-side amb JavaScript i expressions regulars
-- Envia les dades per POST a server.php
+1. `index.html` (portada)
+2. `client.php` (formulari de reserva)
+3. `server.php` (processament i confirmació)
 
-#### **server.php** - Pàgina de Confirmació
-- Pàgina PHP que rep i processa les dades de la reserva
-- Valida les dades al servidor amb expressions regulars
-- Mostra el resultat de la reserva amb tots els detalls
-- Genera un codi únic de reserva
-- Calcula el preu total segons tipus d'habitació i nits
+### 2.2. Disseny i usabilitat
+El lloc utilitza Bootstrap per garantir una interfície responsive i coherent en dispositius d'escriptori i mòbils.
 
----
+Característiques d'interfície:
 
-### **Requisit 2: Formularis, botons i controls amb REGEXP (8pts)**
-✅ **COMPLERT**
+1. Barra de navegació comuna entre pàgines.
+2. Jerarquia visual clara (títols, seccions, botons d'acció).
+3. Missatges d'error i d'èxit diferenciats visualment.
+4. Navegació de retorn per repetir una reserva o tornar a la portada.
 
-#### **Tipus de Controls Implementats:**
-1. **Input text** - Nom complet del client
-2. **Input email** - Correu electrònic
-3. **Input tel** - Telèfon de contacte
-4. **Select** - Ciutat de destinació (9 ciutats europees)
-5. **Input date** - Data d'entrada i sortida
-6. **Select** - Nombre de persones (1-5)
-7. **Radio buttons** - Tipus d'habitació (Individual, Doble, Suite)
-8. **Textarea** - Comentaris opcionals
-9. **Button submit** - Botó per confirmar la reserva
+### 2.3. Integració amb base de dades
+L'aplicació treballa amb la base de dades `world` (MySQL), concretament amb:
 
-#### **Validació amb Expressions Regulars (REGEXP):**
-
-##### **Client-side (JavaScript):**
-```javascript
-// Nom: només lletres i espais, 3-50 caràcters
-var regexNom = /^[A-Za-zÀ-ÿ\s]{3,50}$/;
-
-// Email: format estàndard amb @ i domini
-var regexEmail = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-
-// Telèfon: format espanyol 6XX-9XX amb/sense prefix +34
-var regexTelefon = /^(\+34|0034)?[\s]?[6-9][0-9]{8}$/;
-```
-
-##### **Server-side (PHP):**
-```php
-// Les mateixes expressions regulars aplicades al servidor
-$regexNom = "/^[A-Za-zÀ-ÿ\s]{3,50}$/";
-$regexEmail = "/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/";
-$regexTelefon = "/^(\+34|0034)?[\s]?[6-9][0-9]{8}$/";
-
-// Aplicació amb preg_match()
-if (!preg_match($regexNom, $nom)) {
-    $errors[] = "El nom només pot contenir lletres i espais";
-}
-```
-
-#### **Validació en Temps Real:**
-- Event `blur` detecta quan l'usuari deixa un camp
-- Mostra missatges d'error específics per cada camp
-- Afegeix classe CSS `.has-error` per resaltar camps incorrectes
-- Validació final abans d'enviar el formulari
+1. Taula `cities` (ja existent a `world.sql`) per obtenir ciutats de destinació.
+2. Taula `clients_reserves` (creada automàticament si no existeix) per guardar reserves.
+3. Taula `hotels` (part opcional) per mostrar hotels disponibles al formulari.
 
 ---
 
-### **Requisit 3: Enviament i recepció de dades amb POST/GET (8pts)**
-✅ **COMPLERT**
+## 3. Funcionalitats implementades
 
-#### **Enviament amb POST (client.php):**
+### 3.1. Funcionalitats de la portada (`index.html`)
+
+1. Presentació comercial del servei de reserves.
+2. Enllaços directes a la pàgina de reserva.
+3. Bloc de propietats destacades (targetes amb imatge i descripció).
+4. Informació de valor per a l'usuari (preus, cancel·lació, atenció, etc.).
+5. Enllaços externs de cerca (Google i Wikipedia).
+
+### 3.2. Funcionalitats del formulari (`client.php`)
+
+El formulari permet introduir totes les dades necessàries per fer una reserva:
+
+1. Nom complet.
+2. Correu electrònic.
+3. Telèfon.
+4. Ciutat de destinació (carregada des de base de dades).
+5. Data d'entrada.
+6. Data de sortida.
+7. Nombre de persones.
+8. Tipus d'habitació (Individual, Doble, Suite).
+9. Comentaris opcionals.
+
+A més, implementa:
+
+1. Validació client-side en temps real (feedback immediat).
+2. Restricció de dates per evitar reserves en passat.
+3. Enviament de dades amb mètode `POST` a `server.php`.
+4. Visualització opcional d'una taula d'hotels amb serveis i preu per nit.
+
+### 3.3. Funcionalitats de processament (`server.php`)
+
+Quan l'usuari envia el formulari:
+
+1. Es comprova que la petició arribi per `POST`.
+2. Es validen totes les dades al servidor (segona capa de control).
+3. Es comprova que la ciutat seleccionada existeix realment a `cities`.
+4. Es calculen les nits de l'estada.
+5. Es calcula el preu total segons tipus d'habitació i nits.
+6. Es genera un codi únic de reserva.
+7. S'intenta guardar la reserva a `clients_reserves`.
+8. Es mostra una pantalla de confirmació amb el resum.
+9. Es mostren també les darreres reserves registrades (consulta SQL de lectura).
+
+Si hi ha errors:
+
+1. Es presenta una llista clara d'errors de validació.
+2. Es permet tornar al formulari per corregir les dades.
+
+---
+
+## 4. Flux de funcionament de l'aplicació
+
+1. L'usuari entra a la portada (`index.html`).
+2. Clica "Reservar" i accedeix a `client.php`.
+3. Omple el formulari.
+4. El navegador valida camps bàsics abans d'enviar.
+5. El formulari s'envia per `POST` a `server.php`.
+6. El servidor torna a validar i saneja les dades.
+7. Si tot és correcte, calcula i desa la reserva.
+8. Es mostra confirmació amb codi de reserva i informació completa.
+
+Aquest flux garanteix una experiència guiada per a l'usuari i una capa de control robusta al backend.
+
+---
+
+## 5. Adaptació del codi d'exemple de teoria a l'aplicació web
+
+A continuació s'explica com s'han adaptat els patrons treballats a les transparències de teoria a un cas real de reserva d'hotels.
+
+### 5.1. De formulari genèric a formulari de negoci
+
+Del model teòric de formulari HTML s'ha passat a un formulari orientat a un procés real de reserva, afegint camps propis del domini:
+
+1. Dates d'entrada/sortida.
+2. Nombre de persones.
+3. Tipus d'habitació.
+4. Comentaris de client.
+
+### 5.2. De validació bàsica a validació en dues capes
+
+A la teoria es mostra l'ús de REGEXP i validacions bàsiques. En aquesta pràctica s'ha aplicat en dues capes:
+
+1. Capa client (JavaScript): millora l'experiència d'usuari.
+2. Capa servidor (PHP): garanteix seguretat i consistència.
+
+Això segueix la bona pràctica explicada a classe: no confiar mai exclusivament en la validació del navegador.
+
+### 5.3. De tractament simple de dades a persistència real
+
+En lloc de només mostrar dades enviades, s'ha ampliat el patró teòric perquè:
+
+1. Es consulti informació real de ciutats des de MySQL.
+2. Es guardin reserves en una taula pròpia.
+3. Es recuperin reserves recents per mostrar resultats.
+
+Aquesta adaptació converteix un exercici de formulari en una aplicació amb persistència i traçabilitat.
+
+### 5.4. De comprovacions a lògica de negoci
+
+S'ha afegit lògica que no és només validació sintàctica:
+
+1. Càlcul de nits segons les dates.
+2. Càlcul de preu segons categoria d'habitació.
+3. Generació de codi de reserva únic.
+
+Això reflecteix l'evolució des d'un exemple acadèmic cap a una funcionalitat pròxima a un sistema real.
+
+### 5.5. De pàgina aïllada a experiència completa
+
+Els exemples de teoria acostumen a estar centrats en una sola pàgina o concepte. En aquesta pràctica s'ha connectat tot en un flux complet:
+
+1. Landing inicial.
+2. Formulari.
+3. Processament.
+4. Confirmació/gestió d'errors.
+
+El resultat és una experiència de punta a punta, amb coherència visual i funcional.
+
+### 5.6. Fragments de codi destacats del projecte
+
+Per reforçar la comprensió, s'inclouen alguns fragments reals i representatius.
+
+#### Fragment 1: Enviament del formulari per POST (client.php)
+
+Aquest fragment mostra com es connecta el formulari amb la pàgina de processament.
+
 ```html
 <form id="formReserva" action="server.php" method="POST" novalidate>
-    <!-- Camps del formulari -->
+	<!-- Camps del formulari -->
 </form>
 ```
 
-#### **Recepció amb POST (server.php):**
-```php
-// Verificar mètode d'enviament
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Accedir a les dades enviades
-    $nom = $_POST["nom"];
-    $email = $_POST["email"];
-    $telefon = $_POST["telefon"];
-    $ciutat = $_POST["ciutat"];
-    // ... més camps
-}
+#### Fragment 2: Validació amb expressions regulars al client (client.php)
+
+Abans d'enviar, el navegador valida format de nom, email i telèfon.
+
+```javascript
+var regexNom = /^[A-Za-zÀ-ÿ\s]{3,50}$/;
+var regexEmail = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+var regexTelefon = /^(\+34|0034)?[\s]?[6-9][0-9]{8}$/;
 ```
 
-#### **Seguretat en el Processament:**
-```php
-// Funció de neteja i sanitització
-function neteja_dades($dada) {
-    $dada = trim($dada);              // Elimina espais
-    $dada = stripslashes($dada);      // Elimina barres
-    $dada = htmlspecialchars($dada);  // Prevé XSS
-    return $dada;
-}
-```
+#### Fragment 3: Verificació de mètode i recepció de dades (server.php)
 
----
+El servidor només processa si la petició arriba correctament per POST.
 
-## 📁 ESTRUCTURA DEL PROJECTE
-
-```
-S3/
-├── index.html              # Pàgina principal amb enllaços
-├── client.php             # Formulari de reserva
-├── server.php             # Processament i confirmació
-├── css/
-│   ├── styles.css         # Estils generals
-│   ├── client.css         # Estils de client.php
-│   └── server.css         # Estils de server.php
-├── bootstrap-3.3.7-dist/  # Framework Bootstrap
-├── jquery-ui-1.12.1/      # jQuery per validació
-└── images/                # Imatges de la web
-```
-
----
-
-## 🔄 FLUX DE L'APLICACIÓ
-
-1. **index.html** → L'usuari accedeix a la pàgina principal
-2. **Click "Reservar Ahora"** → Redirigeix a client.php
-3. **client.php** → L'usuari completa el formulari
-4. **Validació Client-side** → JavaScript valida amb REGEXP en temps real
-5. **Submit (POST)** → Envia dades a server.php
-6. **server.php** → Rep dades per POST
-7. **Validació Server-side** → PHP valida amb preg_match() i REGEXP
-8. **Processa** → Neteja dades, calcula preu, genera codi reserva
-9. **Mostra Resultat** → Confirmació amb detalls o errors detectats
-
----
-
-## 🛡️ SEGURETAT IMPLEMENTADA
-
-### **Doble Validació:**
-- **Client-side**: Validació JavaScript per feedback immediat
-- **Server-side**: Validació PHP per seguretat real
-- **Mai confiar només en validació client** (es pot saltar)
-
-### **Sanitització de Dades:**
-```php
-trim()            // Elimina espais innecessaris
-stripslashes()    // Prevé injecció de codi
-htmlspecialchars() // Converteix < > " ' & a entitats HTML
-```
-
-### **Validació de Mètode HTTP:**
 ```php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Només processar si és POST
+	$nom = $_POST["nom"];
+	$email = $_POST["email"];
+	$telefon = $_POST["telefon"];
 }
 ```
 
----
+#### Fragment 4: Inserció segura amb sentència preparada (server.php)
 
-## 🎨 TECNOLOGIES UTILITZADES
+La reserva es desa a base de dades amb una inserció preparada per millorar la robustesa.
 
-### **Frontend:**
-- HTML5 - Estructura semàntica
-- CSS3 - Estils personalitzats
-- Bootstrap 3.3.7 - Disseny responsive
-- jQuery - Validació client-side i interactivitat
+```php
+$insertSql = "INSERT INTO clients_reserves
+	(reservation_code, client_name, email, phone, city_id, city_name, checkin_date, checkout_date, nights, guests, room_type, comments, total_price)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-### **Backend:**
-- PHP - Processament al servidor
-- Expressions Regulars (REGEXP) - Validació de dades
+$stmtInsert = $conn->prepare($insertSql);
+```
 
-### **Patrons de Disseny:**
-- MVC simplificat (Vista: client.php, Controlador: server.php)
-- Separació de concerns (HTML, CSS i PHP en fitxers separats)
-- Progressive Enhancement (funciona sense JavaScript amb validació PHP)
+#### Fragment 5: Generació de codi únic de reserva (server.php)
 
----
+Cada reserva rep un identificador propi per a consultes futures.
 
-## 📊 FUNCIONALITATS ADDICIONALS
-
-### **Càlcul Automàtic:**
-- Nombre de nits (diferència entre dates)
-- Preu total (tipus habitació × nits)
-
-### **Generació de Codi Únic:**
 ```php
 $codiReserva = "RES-" . strtoupper(substr(md5(uniqid()), 0, 8));
-// Exemple: RES-A3F7B2C9
 ```
 
-### **Gestió d'Errors:**
-- Array d'errors per acumular tots els problemes
-- Missatges específics per cada tipus d'error
-- Interfície visual diferenciada (errors en vermell, èxit en verd)
+---
 
-### **Navegació:**
-- Barra de navegació consistent en totes les pàgines
-- Enllaços per tornar al formulari o a la pàgina principal
+## 6. Seguretat i robustesa aplicades
+
+S'han incorporat mesures per augmentar la qualitat del projecte:
+
+1. Sanitització d'entrades (`trim`, `stripslashes`, `htmlspecialchars`).
+2. Validació de mètode HTTP (`POST`).
+3. Validació forta de ciutat contra base de dades (no només text lliure).
+4. Ús de sentències preparades en insercions SQL.
+5. Missatges de diagnòstic quan falla la connexió a BD.
+
+Aquestes decisions redueixen riscos típics d'aplicacions web (dades incorrectes, XSS, errors d'integritat).
 
 ---
 
-## 🧪 COM PROVAR L'APLICACIÓ
+## 7. Decisions de disseny rellevants
 
-### **Requisits:**
-- Servidor Apache amb PHP (XAMPP, WAMP, etc.)
-- Navegador web modern
-
-### **Passos:**
-1. Copiar la carpeta S3 a `C:\xampp\htdocs\`
-2. Iniciar Apache des del panell de XAMPP
-3. Accedir a `http://localhost/S3/index.html`
-4. Click a "Reservar Ahora"
-5. Completar el formulari
-6. Enviar i veure la confirmació
-
-### **Proves de Validació:**
-- Intentar enviar camp nom amb números → Error
-- Introduir email sense @ → Error
-- Telèfon amb format incorrecte → Error
-- Data sortida anterior a entrada → Error
-- Dades correctes → Confirmació amb codi de reserva
+1. Separació d'estils en fitxers CSS específics (`styles.css`, `client.css`, `server.css`).
+2. Reutilització de components Bootstrap per accelerar maquetació i mantenir coherència.
+3. Estructura modular en tres pantalles per separar responsabilitats.
+4. Feedback clar a l'usuari en cada estat (error, èxit, advertència).
 
 ---
 
-## 📝 CONCLUSIONS
+## 8. Conclusió
+La pràctica compleix els requisits demanats i els amplia amb funcionalitats opcionals i millores de robustesa.
 
-✅ Tots els requisits de la pràctica han estat implementats correctament:
-1. Dues pàgines PHP (client.php i server.php)
-2. Formularis amb múltiples controls i validació REGEXP
-3. Enviament i recepció de dades amb POST
+En concret:
 
-✅ Implementacions addicionals:
-- Organització del codi amb comentaris detallats
-- Separació de CSS en arxius independents
-- Validació doble (client i servidor)
-- Seguretat amb sanitització de dades
-- Interfície responsive amb Bootstrap
-- Generació de codi de reserva únic
-- Càlcul automàtic de preus
+1. S'han implementat les dues pàgines PHP requerides i el flux complet de reserva.
+2. S'han aplicat formularis complets amb controls variats i validació amb REGEXP.
+3. S'ha utilitzat correctament l'enviament i recepció de dades amb `POST`.
+4. S'ha integrat la base de dades per consultar ciutats i desar reserves.
+5. S'ha adaptat el codi d'exemple de teoria a una aplicació real i funcional.
 
-✅ Compleix amb bones pràctiques de desenvolupament web:
-- Codi net i comentat
-- Estructura organitzada
-- Seguretat implementada
-- Experiència d'usuari optimitzada
+Per tant, el projecte no només demostra els conceptes de la sessió, sinó que també mostra una aplicació pràctica amb lògica de negoci, persistència de dades i criteris bàsics de qualitat web.
