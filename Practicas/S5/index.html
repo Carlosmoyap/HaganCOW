@@ -25,7 +25,8 @@
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#inicio">Buscar</a></li>
+                        <li><a href="#inicio">Inicio</a></li>
+                        <li><a href="client.php" class="btn-nav-reserva">Reservar Ahora</a></li>
                         <li><a href="#ofertas">Ofertas</a></li>
                         <li><a href="#destinos">Destinos</a></li>
                         <li><a href="#contacto">Contacto</a></li>
@@ -40,21 +41,11 @@
             <section id="inicio" class="hero jumbotron">
                 <h1>Encuentra tu próximo alojamiento</h1>
                 <p>Busca ofertas en hoteles, casas y mucho más...</p>
-                <form class="form-inline form-reserva">
-                    <div class="form-group">
-                        <label for="destino">Destino</label>
-                        <input type="search" class="form-control" id="destino" name="destino" placeholder="Destino">
-                    </div>
-                    <div class="form-group">
-                        <label for="entrada">Fecha de entrada:</label>
-                        <input type="date" class="form-control" id="entrada" name="entrada">
-                    </div>
-                    <div class="form-group">
-                        <label for="salida">Fecha de salida:</label>
-                        <input type="date" class="form-control" id="salida" name="salida">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-reservar">Reservar</button>
-                </form>
+                <div class="text-center hero-cta-wrapper">
+                    <a href="client.php" class="btn btn-primary btn-lg hero-cta-btn">
+                        <span class="glyphicon glyphicon-calendar"></span> Hacer una Reserva
+                    </a>
+                </div>
             </section>
         </main>
         <main class="col-md-3">
@@ -83,7 +74,7 @@
                     <div class="caption">
                         <h3>Grand Hotel Central - BCN</h3>
                         <p>Lujo en el corazón del Barrio Gótico.</p>
-                        <p><a href="#" class="btn btn-default" role="button">Ver disponibilidad</a></p>
+                        <p><a href="client.php" class="btn btn-primary" role="button">Reservar ahora</a></p>
                     </div>
                 </article>
             </div>
@@ -93,7 +84,7 @@
                     <div class="caption">
                         <h3>Le Marais Apartment</h3>
                         <p>Encanto parisino con vistas a la Torre Eiffel.</p>
-                        <p><a href="#" class="btn btn-default" role="button">Ver disponibilidad</a></p>
+                        <p><a href="client.php" class="btn btn-primary" role="button">Reservar ahora</a></p>
                 </article>
             </div>
         </div>

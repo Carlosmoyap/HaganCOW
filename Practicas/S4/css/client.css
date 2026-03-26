@@ -36,3 +36,28 @@
 .required {
     color: red;
 }
+
+.panel-hotels {
+    margin-bottom: 25px;
+}
+
+.table-no-margin {
+    margin-bottom: 0;
+}
+
+.actions-group {
+    margin-top: 20px;
+}
+
+.btn-gap-left {
+    margin-left: 8px;
+}
+
+.preview-reserva {
+    display: none;
+    margin-top: 15px;
+}
+
+.preview-contingut {
+    margin-top: 8px;
+}

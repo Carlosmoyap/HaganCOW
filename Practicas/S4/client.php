@@ -56,12 +56,12 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
             <?php } ?>
 
             <?php if (!empty($hotels)) { ?>
-                <div class="panel panel-info" style="margin-bottom: 25px;">
+                <div class="panel panel-info panel-hotels">
                     <div class="panel-heading">
-                        <strong>Hotels disponibles (part opcional)</strong>
+                        <strong>Hotels disponibles</strong>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-condensed" style="margin-bottom: 0;">
+                        <table class="table table-striped table-condensed table-no-margin">
                             <thead>
                                 <tr>
                                     <th>Hotel</th>
@@ -194,21 +194,21 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
                 </div>
 
                 <!-- Botó enviar -->
-                <div class="form-group" style="margin-top: 20px;">
+                <div class="form-group actions-group">
                     <button type="button" id="btnPreview" class="btn btn-info">
                         <span class="glyphicon glyphicon-eye-open"></span> Previsualitzar
                     </button>
-                    <button type="reset" id="btnNetejar" class="btn btn-default" style="margin-left: 8px;">
+                    <button type="reset" id="btnNetejar" class="btn btn-default btn-gap-left">
                         <span class="glyphicon glyphicon-refresh"></span> Netejar
                     </button>
-                    <button type="submit" class="btn btn-primary btn-reservar" style="margin-left: 8px;">
+                    <button type="submit" class="btn btn-primary btn-reservar btn-gap-left">
                         <span class="glyphicon glyphicon-ok"></span> Confirmar Reserva
                     </button>
                 </div>
 
-                <div id="previewReserva" class="alert alert-info" style="display: none; margin-top: 15px;">
+                <div id="previewReserva" class="alert alert-info preview-reserva">
                     <strong>Previsualitzacio:</strong>
-                    <div id="previewContingut" style="margin-top: 8px;"></div>
+                    <div id="previewContingut" class="preview-contingut"></div>
                 </div>
             </form>
         </div>
@@ -217,6 +217,7 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
     <script src="jquery-ui-1.12.1/external/jquery/jquery.js"></script>
     <script src="bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.3.0/prototype.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/scriptaculous.js?load=effects"></script>
     <script src="js/client-form.js"></script>
 </body>
 </html>

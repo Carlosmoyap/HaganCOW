@@ -17,11 +17,42 @@ document.observe('dom:loaded', function() {
     var regexEmail = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     var regexTelefon = /^(\+34|0034)?[\s]?[6-9][0-9]{8}$/;
 
+    function hasEffects() {
+        return typeof Effect !== 'undefined';
+    }
+
+    function revealPreview() {
+        if (hasEffects()) {
+            if (!previewBox.visible()) {
+                Effect.BlindDown(previewBox, { duration: 0.35 });
+            }
+        } else {
+            previewBox.show();
+        }
+    }
+
+    function hidePreview() {
+        if (hasEffects()) {
+            if (previewBox.visible()) {
+                Effect.BlindUp(previewBox, { duration: 0.2 });
+            }
+        } else {
+            previewBox.hide();
+        }
+    }
+
+    function emphasizeField(field) {
+        if (hasEffects()) {
+            Effect.Highlight(field, { startcolor: '#f2dede', endcolor: '#ffffff', duration: 0.7 });
+        }
+    }
+
     function markError(field, errorId, hasError) {
         var errorNode = $(errorId);
         if (hasError) {
             field.addClassName('has-error');
             errorNode.show();
+            emphasizeField(field);
         } else {
             field.removeClassName('has-error');
             errorNode.hide();
@@ -106,6 +137,10 @@ document.observe('dom:loaded', function() {
     dataEntradaField.observe('change', validateDates);
     dataSortidaField.observe('change', validateDates);
 
+    if (hasEffects()) {
+        Effect.Appear($('formReserva'), { duration: 0.4, from: 0.85 });
+    }
+
     $$('input[name="tipusHabitacio"]').each(function(node) {
         node.observe('change', function() {
             $('errorTipusHabitacio').hide();
@@ -115,7 +150,10 @@ document.observe('dom:loaded', function() {
     $('btnPreview').observe('click', function() {
         var valid = validateNom() && validateEmail() && validateTelefon() && validateCiutat() && validatePersones() && validateTipus() && validateDates();
         if (!valid) {
-            previewBox.hide();
+            hidePreview();
+            if (hasEffects()) {
+                Effect.Shake($('formReserva'), { distance: 8, duration: 0.4 });
+            }
             alert('No es pot previsualitzar fins corregir els errors del formulari.');
             return;
         }
@@ -134,7 +172,7 @@ document.observe('dom:loaded', function() {
         previewHtml += '<div><strong>Habitacio:</strong> ' + selectedTipus + '</div>';
 
         previewContent.update(previewHtml);
-        previewBox.show();
+        revealPreview();
     });
 
     $('btnNetejar').observe('click', function(event) {
@@ -151,7 +189,7 @@ document.observe('dom:loaded', function() {
                 node.removeClassName('has-error');
             });
             previewContent.update('');
-            previewBox.hide();
+            hidePreview();
         }, 0);
     });
 
@@ -159,6 +197,9 @@ document.observe('dom:loaded', function() {
         var valid = validateNom() && validateEmail() && validateTelefon() && validateCiutat() && validatePersones() && validateTipus() && validateDates();
         if (!valid) {
             event.stop();
+            if (hasEffects()) {
+                Effect.Shake($('formReserva'), { distance: 10, duration: 0.45 });
+            }
             alert('Si us plau, corregeix els errors del formulari');
         }
     });
