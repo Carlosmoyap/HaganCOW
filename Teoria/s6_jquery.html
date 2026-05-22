@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masterclass: jQuery, AJAX i HTML5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* CSS per a la presentació */
+        :root {
+            --bg-color: #0f172a;      /* Fons fosc d'alta visibilitat */
+            --text-color: #f8fafc;    /* Text clar */
+            --accent-blue: #38bdf8;
+            --accent-yellow: #facc15;
+            --accent-green: #34d399;
+            --box-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; /* Evita scroll fora de la presentació */
+        }
+
+        /* Contenidor principal de diapositives */
+        #deck {
+            position: relative;
+            width: 100%; height: calc(100% - 60px); /* Espai per als controls */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Cada diapositiva */
+        .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 40px 80px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* Tipografia d'alt contrast */
+        h1 { font-size: 65px; text-align: center; margin-bottom: 20px; font-weight: 800; }
+        h1 span { color: var(--accent-yellow); }
+        h2.slide-title {
+            font-size: 42px; margin-bottom: 30px;
+            border-left: 8px solid var(--accent-blue); padding-left: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        h3 { font-size: 28px; color: var(--accent-blue); margin-bottom: 15px; margin-top: 10px; }
+        p, li { font-size: 22px; line-height: 1.6; margin-bottom: 15px; }
+        
+        /* Layouts de contingut */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .two-column { display: flex; gap: 40px; height: 100%; align-items: stretch; }
+        .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        ul.bullet-list { list-style: none; }
+        ul.bullet-list li { position: relative; padding-left: 30px; }
+        ul.bullet-list li::before { content: '▹'; color: var(--accent-blue); font-size: 28px; position: absolute; left: 0; top: -2px; }
+
+        /* Arbre DOM */
+        .tree-box {
+            background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569;
+            font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #94a3b8; margin-bottom: 20px;
+        }
+        .tree-tag { color: var(--accent-blue); font-weight: bold; }
+        .tree-txt { color: #a3e635; }
+        .tree-hl { background: rgba(250, 204, 21, 0.2); border: 1px solid var(--accent-yellow); color: #fff; padding: 0 5px; border-radius: 4px; }
+        .tree-bad { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fff; padding: 0 5px; border-radius: 4px; }
+
+        /* Caixes JS Modern */
+        .modern-box {
+            background: rgba(16, 185, 129, 0.1); border-left: 5px solid var(--accent-green);
+            padding: 20px; border-radius: 0 8px 8px 0; margin-top: auto;
+        }
+        .modern-box h4 { color: var(--accent-green); font-size: 22px; margin-bottom: 10px; }
+        .modern-box code { color: #a7f3d0; font-size: 18px; display: block; margin-top: 5px; }
+
+        /* Codi */
+        pre {
+            background-color: #020617; border: 1px solid #334155; border-radius: 8px;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 18px;
+            overflow-x: auto; margin-bottom: 20px; color: #e2e8f0;
+        }
+        code { font-family: 'JetBrains Mono', monospace; color: var(--accent-yellow); }
+        .com { color: #64748b; font-style: italic; } .str { color: #a6e22e; } .fn { color: #61afef; } .tag { color: #e06c75; } .kw { color: #c678dd; }
+
+        /* Interfície Laboratoris */
+        .lab-container { display: flex; flex-direction: column; height: 100%; gap: 15px; flex-grow: 1; }
+        .lab-editors { display: flex; gap: 20px; height: 220px; }
+        .lab-pane { flex: 1; display: flex; flex-direction: column; }
+        .lab-label { background: #334155; padding: 8px 15px; font-weight: bold; border-radius: 8px 8px 0 0; font-size: 16px; }
+        .lab-editor {
+            width: 100%; flex-grow: 1; background: #020617; color: #a3e635; border: 1px solid #334155;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 16px; resize: none; border-radius: 0 0 8px 8px;
+        }
+        .lab-editor:focus { outline: none; border-color: var(--accent-blue); }
+        .lab-controls { display: flex; justify-content: flex-end; }
+        .btn-run { background: var(--accent-blue); color: #fff; border: none; padding: 12px 30px; font-size: 20px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-run:hover { background: #0284c7; }
+        .lab-output { flex-grow: 1; border: 3px solid #334155; border-radius: 8px; background: #fff; width: 100%; min-height: 200px; }
+
+        /* Controls de presentació (Barra inferior) */
+        #controls {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #020617; border-top: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+            z-index: 100;
+        }
+        .ctrl-btn {
+            background: transparent; color: var(--text-color); border: 1px solid #334155;
+            padding: 8px 20px; font-size: 18px; border-radius: 6px; cursor: pointer; font-family: 'Outfit';
+        }
+        .ctrl-btn:hover { background: #1e293b; color: var(--accent-yellow); }
+        #progress { font-size: 18px; color: #94a3b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+
+    <!-- SLIDE 1: Títol -->
+    <section class="slide active">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <i class="fa-brands fa-js" style="font-size: 150px; color: var(--accent-yellow); margin-bottom: 30px;"></i>
+            <h1>Dominant <span>jQuery</span> i el DOM</h1>
+            <p style="font-size: 32px; color: #94a3b8; margin-top: 20px; text-align: center;">Navegació, Manipulació de Nodes, AJAX, jQuery UI<br>i l'evolució cap a HTML5 i JS Modern</p>
+            <p style="margin-top: 40px; color: var(--accent-blue); font-size: 20px;"><i class="fa-solid fa-keyboard"></i> Utilitza les fletxes per navegar</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Arbre DOM -->
+    <section class="slide">
+        <h2 class="slide-title">1. Cercar en l'arbre del DOM <i class="fa-solid fa-sitemap" style="color: var(--accent-blue);"></i></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Estructura HTML</h3>
+<pre>
+<span class="tag">&lt;body&gt;</span>
+  <span class="tag">&lt;h1&gt;</span>Where do you want to go?<span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;p&gt;</span>Plan your next adventure.<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/body&gt;</span>
+</pre>
+                    <p>Llegir el text del node (<code>.text()</code>):</p>
+<pre>
+<span class="fn">$</span>(<span class="str">"h1"</span>).<span class="fn">text</span>(); 
+<span class="com">// Retorna: "Where do you want to go?"</span>
+</pre>
+                    <p>Canviar el text del node:</p>
+<pre>
+<span class="fn">$</span>(<span class="str">"h1"</span>).<span class="fn">text</span>(<span class="str">"Where to?"</span>);
+</pre>
+                </div>
+                <div class="col">
+                    <h3>El Node al Document</h3>
+                    <div class="tree-box">
+                        DOCUMENT<br>
+                        └─ <span class="tree-tag">html</span><br>
+                        &nbsp;&nbsp;&nbsp;├─ <span class="tree-tag">head</span><br>
+                        &nbsp;&nbsp;&nbsp;└─ <span class="tree-tag">body</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ <span class="tree-tag">h1</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="tree-hl">"Where to?"</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="tree-tag">p</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="tree-txt">"Plan your next adventure."</span>
+                    </div>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> Equivalència JS Modern</h4>
+                        <code>document.querySelector("h1").textContent = "Where to?";</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Seleccions Múltiples -->
+    <section class="slide">
+        <h2 class="slide-title">2. Seleccionar múltiples nodes</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Llista de Destinacions</h3>
+<pre>
+<span class="tag">&lt;ul</span> <span class="kw">id</span>=<span class="str">"destinations"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;li&gt;</span>Rome<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li&gt;</span>Paris<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li</span> <span class="kw">class</span>=<span class="str">'promo'</span><span class="tag">&gt;</span>Rio<span class="tag">&lt;/li&gt;</span>
+<span class="tag">&lt;/ul&gt;</span>
+</pre>
+                    <ul class="bullet-list">
+                        <li><code>$("li").text("Orlando");</code><br>Canvia TOTS els elements <code>&lt;li&gt;</code> alhora.</li>
+                        <li><code>$("#destinations");</code><br>Selecciona per ID (Només l'<code>ul</code>).</li>
+                        <li><code>$(".promo");</code><br>Selecciona per Classe (El node "Rio").</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>Seleccions Híbrides i Descendents</h3>
+                    <ul class="bullet-list">
+                        <li><code>$(".promo, #france");</code><br>Selecciona varis elements combinant regles.</li>
+                        <li><code>$("#destinations li");</code><br>Qualsevol <code>li</code> descendent.</li>
+                        <li><code>$("#destinations > li");</code><br>NOMÉS els fills directes.</li>
+                    </ul>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern: querySelectorAll</h4>
+                        <p>JS Natiu ja suporta CSS sencer:</p>
+                        <code>document.querySelectorAll("#destinations > li, .promo");</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Filtres i Jerarquia -->
+    <section class="slide">
+        <h2 class="slide-title">3. Filtres i Jerarquia de Nodes</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Filtres de Posició</h3>
+                    <ul class="bullet-list">
+                        <li><code>$("li:first");</code> o <code>$("li").first();</code></li>
+                        <li><code>$("li:last");</code> o <code>$("li").last();</code></li>
+                        <li><code>$("li:odd");</code> (Senars: index 1 - Paris)</li>
+                        <li><code>$("li:even");</code> (Parells: index 0, 2 - Rome, Rio)</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Navegar per Jerarquia</h3>
+                    <ul class="bullet-list">
+                        <li><code>$("li").first().parent();</code> (Puja al node pare)</li>
+                        <li><code>$("li").first().next();</code> (Salta de Rome a Paris)</li>
+                        <li><code>$("#dest").find("li");</code> (Cerca qualsevol descendent)</li>
+                        <li><code>$("#dest").children("li");</code> (Cerca només fills directes)</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>L'Arbre Recorregut</h3>
+                    <div class="tree-box">
+                        <span class="tree-tag">ul</span> #destinations<br>
+                        &nbsp;├─ <span class="tree-tag">li</span> #0 (first) (even)<br>
+                        &nbsp;│&nbsp;&nbsp;└─ <span class="tree-txt">Rome</span><br>
+                        &nbsp;├─ <span class="tree-tag">li</span> #1 (next) (odd)<br>
+                        &nbsp;│&nbsp;&nbsp;└─ <span class="tree-txt">Paris</span><br>
+                        &nbsp;└─ <span class="tree-tag">li</span> #2 (last) (even)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="tree-txt">Rio</span>
+                    </div>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern</h4>
+                        <code>el.nextElementSibling</code>
+                        <code>el.parentElement</code>
+                        <code>el.children</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: LAB 1 -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 1: Navegació i Filtres <i class="fa-solid fa-laptop-code" style="color: var(--accent-green);"></i></h2>
+        <div class="content-area">
+            <p>Experimenta canviant els selectors jQuery per alterar els nodes HTML. Clica "Executar" per veure-ho.</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label">HTML</div>
+                        <textarea class="lab-editor" id="html-code-1" spellcheck="false">
+<ul id="destinations">
+  <li>Rome</li>
+  <li>Paris</li>
+  <li class="promo">Rio</li>
+</ul>
+<p id="msg">Proves DOM</p></textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label">JavaScript</div>
+                        <textarea class="lab-editor" id="js-code-1" spellcheck="false">
+// Prova: "li:first", ".promo", etc.
+$("li:odd").css("color", "red");
+$("li:odd").css("font-weight", "bold");
+$("#msg").text("He modificat els elements imparells!");
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(1)"><i class="fa-solid fa-play"></i> Executar</button>
+                </div>
+                <iframe id="output-1" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: Afegir Nodes -->
+    <section class="slide">
+        <h2 class="slide-title">4. Afegir i moure nodes</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Crear un Node</h3>
+<pre>
+<span class="com">// Crea el node a memòria però NO el posa al DOM:</span>
+<span class="kw">var</span> price = <span class="fn">$</span>(<span class="str">'&lt;p&gt;From $399&lt;/p&gt;'</span>);
+</pre>
+                    <h3>Mètodes d'Inserció (Errors típics)</h3>
+                    <ul class="bullet-list">
+                        <li><code>$('.vacation').before(price);</code><br><span class="tree-bad">NO!</span> El col·loca a fora, abans de l'element.</li>
+                        <li><code>$('.vacation').after(price);</code><br><span class="tree-bad">NO!</span> El col·loca a fora, després.</li>
+                        <li><code>$('.vacation').prepend(price);</code><br>El col·loca a dins, però al principi de tot.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>La Solució: Append</h3>
+<pre>
+<span class="kw">var</span> price = <span class="fn">$</span>(<span class="str">'&lt;p&gt;From $399&lt;/p&gt;'</span>);
+
+<span class="com">// CORRECTE! Afegeix al FINAL, per dins.</span>
+<span class="fn">$</span>(<span class="str">'.vacation'</span>).<span class="fn">append</span>(price);
+
+<span class="com">// Alternativa inversa:</span>
+price.<span class="fn">appendTo</span>(<span class="fn">$</span>(<span class="str">'.vacation'</span>));
+</pre>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern</h4>
+                        <p>L'API de DOM nativa ha copiat literalment aquests noms:</p>
+                        <code>element.append(node)</code>
+                        <code>element.prepend(node)</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: Events i Remove -->
+    <section class="slide">
+        <h2 class="slide-title">5. Esdeveniments i Eliminar nodes</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Events No Obstructius</h3>
+                    <p>No fem servir <code>onclick=""</code> a l'HTML.</p>
+<pre>
+<span class="fn">$</span>(document).<span class="fn">ready</span>(<span class="kw">function</span>() {
+
+  <span class="com">// Quan es faci clic a un botó...</span>
+  <span class="fn">$</span>(<span class="str">'button'</span>).<span class="fn">on</span>(<span class="str">'click'</span>, <span class="kw">function</span>() {
+    <span class="kw">var</span> preu = <span class="fn">$</span>(<span class="str">'&lt;p&gt;$399&lt;/p&gt;'</span>);
+    
+    <span class="com">// S'afegeix just darrere</span>
+    <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">after</span>(preu); 
+    
+    <span class="com">// Elimina aquest botó en concret</span>
+    <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">remove</span>();
+  });
+  
+});
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Compte amb el Context Global</h3>
+                    <div class="tree-box">
+                        <p style="color:#ef4444; margin:0"><strong>ERROR:</strong> <code>$('button').remove();</code></p>
+                        <p style="margin-top:10px; font-size:16px;">Això eliminaria <strong>TOTS</strong> els botons de la web alhora. Per això utilitzem el referent relatiu <code>$(this)</code> per referir-nos només al node que ha disparat l'esdeveniment.</p>
+                    </div>
+                    <h3>Altres funcions d'interès</h3>
+                    <ul class="bullet-list">
+                        <li><code>alert('Hola');</code> Mostra un avís al navegador.</li>
+                        <li><code>$('li').length;</code> Retorna quants nodes compleixen la condició.</li>
+                    </ul>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern</h4>
+                        <code>el.addEventListener('click', fn)</code>
+                        <code>el.remove()</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: Forms i Math -->
+    <section class="slide">
+        <h2 class="slide-title">6. Interacció amb formularis i càlculs</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Llegint <code>data-</code> i formularis</h3>
+<pre>
+<span class="tag">&lt;div</span> <span class="kw">class</span>=<span class="str">"vacation"</span> <span class="kw">data-price</span>=<span class="str">'399'</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="kw">type</span>=<span class="str">'number'</span> <span class="kw">class</span>=<span class="str">'quantity'</span> <span class="kw">value</span>=<span class="str">'1'</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;span</span> <span class="kw">id</span>=<span class="str">'total'</span><span class="tag">&gt;</span>399<span class="tag">&lt;/span&gt;</span>
+</pre>
+                    <p>Utilitzarem <code>keyup</code> (quan l'usuari deixa anar una tecla) o <code>change</code> (quan canvia el valor de l'input).</p>
+                </div>
+                <div class="col">
+                    <h3>La Lògica</h3>
+<pre>
+<span class="fn">$</span>(<span class="str">'.vacation'</span>).<span class="fn">on</span>(<span class="str">'keyup change'</span>, <span class="str">'.quantity'</span>, <span class="kw">function</span>() {
+  
+  <span class="com">// .data() llegeix l'atribut data-price</span>
+  <span class="com">// El signe '+' converteix l'String a número</span>
+  <span class="kw">var</span> preu = +<span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">closest</span>(<span class="str">'.vacation'</span>).<span class="fn">data</span>(<span class="str">'price'</span>);
+  
+  <span class="com">// .val() llegeix què ha escrit l'usuari</span>
+  <span class="kw">var</span> qtt = +<span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">val</span>();
+  
+  <span class="com">// Actualitzem el text del resultat</span>
+  <span class="fn">$</span>(<span class="str">'#total'</span>).<span class="fn">text</span>(preu * qtt);
+});
+</pre>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern</h4>
+                        <code>let preu = el.closest('.vacation').dataset.price;</code>
+                        <code>let valor = inputEl.value;</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: LAB 2 -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 2: Càlcul i Manipulació <i class="fa-solid fa-laptop-code" style="color: var(--accent-green);"></i></h2>
+        <div class="content-area">
+            <p>Aquest formulari ja és reactiu. Prova de canviar el JavaScript per afegir un descompte del 10% si <code>qty > 3</code>.</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label">HTML</div>
+                        <textarea class="lab-editor" id="html-code-2" spellcheck="false">
+<div class="vacation" data-price="250" style="padding:15px; background:#e2e8f0; border-radius:8px;">
+  <h3 style="margin:0">Viatge a Hawaii</h3>
+  <p>Preu base: 250€<br>
+    Tiquets: <input type="number" class="quantity" value="1" style="width:60px; font-size:18px;">
+  </p>
+  <button class="btn-buy" style="padding:10px; cursor:pointer;">Comprar Ara</button>
+</div>
+<h2 style="margin-top:15px;">Total: <span id="total">250</span>€</h2>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label">JavaScript</div>
+                        <textarea class="lab-editor" id="js-code-2" spellcheck="false">
+$('.vacation').on('keyup change', '.quantity', function() {
+  var price = +$(this).closest('.vacation').data('price');
+  var qty = +$(this).val();
+  
+  // Afegeix el teu descompte aquí!
+  
+  $('#total').text(price * qty);
+});
+
+$('.btn-buy').on('click', function() {
+  $(this).after("<b style='color:green; margin-left:10px;'>Gràcies!</b>");
+  $(this).hide(); // Amaga en lloc d'esborrar
+});
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(2)"><i class="fa-solid fa-play"></i> Executar</button>
+                </div>
+                <iframe id="output-2" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: CSS i Efectes -->
+    <section class="slide">
+        <h2 class="slide-title">7. Ressaltar i Animar (CSS vs jQuery)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Mètode obsolet: CSS en línia</h3>
+<pre>
+<span class="com">// Funciona, però barreja estètica i programació</span>
+<span class="fn">$</span>(<span class="str">".box"</span>).<span class="fn">css</span>({
+  <span class="str">'background-color'</span>: <span class="str">'#556633'</span>,
+  <span class="str">'border'</span>: <span class="str">'2px solid red'</span>
+});
+<span class="fn">$</span>(<span class="str">".box"</span>).<span class="fn">show</span>(); <span class="com">// Treu el display:none</span>
+</pre>
+                    <h3>Mètode Recomanat: Classes</h3>
+<pre>
+<span class="com">// Afegeix la classe per activar regles del full CSS</span>
+<span class="fn">$</span>(<span class="str">".box"</span>).<span class="fn">addClass</span>(<span class="str">'highlighted'</span>);
+
+<span class="com">// Alterna la classe (posa-la si no hi és, treu-la si hi és)</span>
+<span class="fn">$</span>(<span class="str">".box"</span>).<span class="fn">toggleClass</span>(<span class="str">'highlighted'</span>);
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Efectes i Animacions</h3>
+                    <p>jQuery integrava mètodes per animar l'alçada o l'opacitat: <code>.slideDown()</code>, <code>.fadeIn()</code>.</p>
+<pre>
+<span class="com">// Anima cap amunt de forma fluida (ms)</span>
+<span class="fn">$</span>(<span class="str">".box"</span>).<span class="fn">animate</span>({<span class="str">'top'</span>: <span class="str">'-10px'</span>}, <span class="str">400</span>);
+</pre>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-css3-alt"></i> Substituït per CSS3</h4>
+                        <p>La funció <code>animate()</code> consumia molta CPU i bloquejava el fil principal. Avui les animacions es fan afegint una classe i usant <strong>Transicions CSS3</strong> que fan servir la targeta gràfica (GPU).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: AJAX -->
+    <section class="slide">
+        <h2 class="slide-title">8. Comunicació AJAX</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Què és l'AJAX?</h3>
+                    <p>Permet recuperar dades (XML, JSON, HTML) del servidor de forma asíncrona sense recarregar la pàgina (ex: Gmail, Google Maps).</p>
+                    <h3>Carregar blocs: <code>.load()</code></h3>
+<pre>
+<span class="fn">$</span>(<span class="str">"#resultat"</span>).<span class="fn">load</span>(<span class="str">"fitxer.html"</span>);
+</pre>
+                    <h3>Solucionar conflictes del Símbol $</h3>
+<pre>
+<span class="com">// Si usem altres llibreries que empren el $</span>
+<span class="kw">var</span> jq = <span class="fn">$</span>.<span class="fn">noConflict</span>();
+jq(<span class="str">"p"</span>).<span class="fn">hide</span>();
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Petició GET vs POST</h3>
+<pre>
+<span class="com">// GET: Recupera informació via URL (?q=1)</span>
+<span class="fn">$</span>.<span class="fn">get</span>(<span class="str">"getuser.php?q=1"</span>, <span class="kw">function</span>(dades) {
+  <span class="fn">$</span>(<span class="str">"#info"</span>).<span class="fn">html</span>(dades);
+});
+
+<span class="com">// POST: Envia dades protegides i sense límit</span>
+<span class="fn">$</span>.<span class="fn">post</span>(<span class="str">"save.php"</span>, 
+  { nom: <span class="str">"Pere"</span>, edat: <span class="str">30</span> }, 
+  <span class="kw">function</span>(res) { <span class="fn">alert</span>(<span class="str">"Guardat!"</span>); }
+);
+</pre>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> Fetch API Natiu</h4>
+                        <code>fetch('api.php').then(r => r.json()).then(...)</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: jQuery UI Intro -->
+    <section class="slide">
+        <h2 class="slide-title">9. Introducció a <span>jQuery UI</span></h2>
+        <div class="content-area" style="justify-content: center;">
+            <p style="text-align:center; font-size:26px; margin-bottom: 40px;">jQuery UI era l'extensió oficial per crear aplicacions d'escriptori ràpidament al navegador.</p>
+            
+            <div style="display: flex; gap: 30px;">
+                <div style="flex:1; background: var(--box-bg); padding: 30px; border-radius: 12px; border-top: 5px solid var(--accent-yellow);">
+                    <h3 style="color:var(--text-color);"><i class="fa-solid fa-hand-pointer" style="color:var(--accent-yellow);"></i> Interaccions</h3>
+                    <p>Afegeixen comportaments avançats de ratolí. Es pot fer llistes <em>sortable</em>, elements <em>resizable</em> i <em>drag & drop</em> amb una línia de codi.</p>
+                </div>
+                <div style="flex:1; background: var(--box-bg); padding: 30px; border-radius: 12px; border-top: 5px solid var(--accent-blue);">
+                    <h3 style="color:var(--text-color);"><i class="fa-solid fa-window-maximize" style="color:var(--accent-blue);"></i> Widgets</h3>
+                    <p>Controls pre-definits que aporten elements típics del Sistema Operatiu (Datepicker, Slider) temables via "ThemeRoller".</p>
+                </div>
+                <div style="flex:1; background: var(--box-bg); padding: 30px; border-radius: 12px; border-top: 5px solid var(--accent-green);">
+                    <h3 style="color:var(--text-color);"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-green);"></i> Effects</h3>
+                    <p>Efectes avançats d'esvaïment, transicions de color i animacions de classes extenses.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 13: Drag Drop -->
+    <section class="slide">
+        <h2 class="slide-title">10. jQuery UI: <span>Draggable</span> i <span>Droppable</span></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Draggable (Arrossegable)</h3>
+                    <p>Amb <code>$("#elem").draggable();</code> podem moure qualsevol node per la pantalla.</p>
+                    <ul class="bullet-list">
+                        <li><strong>Constrained:</strong> <code>{ axis: "x" }</code> o <code>{ containment: "parent" }</code> restringeix per on pot viatjar.</li>
+                        <li><strong>Delay:</strong> Espera temps abans d'activar-se per no confondre's amb un simple clic.</li>
+                        <li><strong>Esdeveniments:</strong> Pot escoltar quan comença (<em>start</em>), quan es mou (<em>drag</em>), i en deixar-ho anar (<em>stop</em>).</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>Droppable (Àrea receptora)</h3>
+                    <p>Es combina per crear la mecànica "Drag & Drop".</p>
+<pre>
+<span class="fn">$</span>(<span class="str">"#brossa"</span>).<span class="fn">droppable</span>({
+  accept: <span class="str">'.arxiu'</span>, <span class="com">// Filtre de què hi entra</span>
+  drop: <span class="kw">function</span>(event, ui) {
+    <span class="com">// Elimina l'element quan entra</span>
+    ui.draggable.<span class="fn">remove</span>();
+    <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">addClass</span>(<span class="str">"ple"</span>);
+  }
+});
+</pre>
+                    <p>Molt típic en gestors de fitxers o en afegir productes a la cistella de la compra arrossegant-los.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 14: Sortable -->
+    <section class="slide">
+        <h2 class="slide-title">11. jQuery UI: Interaccions Avançades</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Resizable (Redimensionable)</h3>
+                    <ul class="bullet-list">
+                        <li>Afegeix "agafadors" als marges d'un `div` per canviar la seva amplada/alçada.</li>
+                        <li><strong>Helper (Ghost):</strong> Mostra una línia guia transparent en comptes de redimensionar el contingut en viu per estalviar CPU.</li>
+                    </ul>
+                    <h3 style="margin-top:20px;">Selectable</h3>
+                    <ul class="bullet-list">
+                        <li>Permet crear un quadre de selecció de fitxers dibuixant amb el ratolí o usant <code>Ctrl+Clic</code>.</li>
+                        <li>Molt útil per marcar fotos per esborrar.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>Sortable (Llistes Ordenables)</h3>
+                    <ul class="bullet-list">
+                        <li>Permet agafar els elements <code>&lt;li&gt;</code> d'una llista i reordenar-los lliurement.</li>
+                        <li><strong>Connect list:</strong> Passar elements d'una llista (Taula A) a una altra (Taula B) com a un Kanban de Trello.</li>
+                        <li><strong>Portlets:</strong> Recrear vistes de panells d'escriptori on els mòduls de notícies, clima o calendaris es poden arrossegar i intercanviar posicions.</li>
+                    </ul>
+                    <div class="modern-box" style="margin-top:20px;">
+                        <h4><i class="fa-brands fa-html5"></i> API Drag & Drop HTML5</h4>
+                        <p>L'atribut natiu <code>draggable="true"</code> i els events <code>ondragstart</code> i <code>ondrop</code> són ara l'estàndard web per fer això.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 15: Widgets 1 -->
+    <section class="slide">
+        <h2 class="slide-title">12. jQuery UI: Widgets (Accordion, Auto)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Accordion (Pestanyes Expansibles)</h3>
+<pre>
+<span class="fn">$</span>(<span class="str">"#accordion"</span>).<span class="fn">accordion</span>();
+</pre>
+                    <p>Tancava i obria blocs de contingut agrupats per encapçalaments de forma suau, ideal per a llistes de preguntes freqüents (FAQ).</p>
+
+                    <h3 style="margin-top: 20px;">Autocomplete</h3>
+                    <p>Cercador intuïtiu. Suggereix autocompletat mentre escrius llegint d'una matriu (Array) o fent peticions AJAX per cada lletra teclejada.</p>
+                </div>
+                <div class="col">
+                    <h3>Dialogs (Modals) i Tooltips</h3>
+                    <ul class="bullet-list">
+                        <li><strong>Dialog:</strong> Finestres emergents completament estilitzades amb botons inferiors, que enfosquien el fons i bloquejaven l'usuari fins a prémer 'Acceptar'.</li>
+                        <li><strong>Tooltips:</strong> Substituïa els "title" lletjos del navegador per bafarades (balonets) estètics que seguien el cursor.</li>
+                    </ul>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-html5"></i> Elements Natius</h4>
+                        <code>&lt;details&gt; i &lt;summary&gt;</code> per Accordions.<br>
+                        <code>&lt;dialog&gt;</code> per a finestres modals.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 16: Widgets 2 -->
+    <section class="slide">
+        <h2 class="slide-title">13. jQuery UI: Widgets (Dates, Control)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Datepicker (Calendari)</h3>
+                    <p>El giny estrella de jQuery UI. Mostrava un calendari emergent impecable per triar la data o rangs entre dos dies. Suportava internacionalització ràpida.</p>
+                    
+                    <h3 style="margin-top:20px;">Slider, Spinner, Progressbar</h3>
+                    <ul class="bullet-list">
+                        <li><strong>Slider:</strong> Cursor lliscant per triar volum, o un rang amb dos tiradors (Ex: Preus entre $50 i $100).</li>
+                        <li><strong>Spinner:</strong> Input numèric clàssic amb fletxes d'increment.</li>
+                        <li><strong>Progress:</strong> Barra d'estat visual per a càrregues (%).</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>La caiguda de jQuery UI</h3>
+                    <table style="width: 100%; border-collapse: collapse; background: var(--box-bg); margin-top: 15px; border-radius:8px; overflow:hidden;">
+                        <tr style="background: rgba(56, 189, 248, 0.2);"><th style="padding:15px; text-align:left;">jQuery UI</th><th style="padding:15px; text-align:left;">HTML5 Natiu</th></tr>
+                        <tr><td style="padding:12px; border-bottom:1px solid #334155;">Datepicker</td><td style="padding:12px; border-bottom:1px solid #334155;"><code>&lt;input type="date"&gt;</code></td></tr>
+                        <tr><td style="padding:12px; border-bottom:1px solid #334155;">Slider</td><td style="padding:12px; border-bottom:1px solid #334155;"><code>&lt;input type="range"&gt;</code></td></tr>
+                        <tr><td style="padding:12px; border-bottom:1px solid #334155;">Spinner</td><td style="padding:12px; border-bottom:1px solid #334155;"><code>&lt;input type="number"&gt;</code></td></tr>
+                        <tr><td style="padding:12px; border-bottom:1px solid #334155;">Progressbar</td><td style="padding:12px; border-bottom:1px solid #334155;"><code>&lt;progress&gt;</code></td></tr>
+                        <tr><td style="padding:12px;">Autocomplete</td><td style="padding:12px;"><code>&lt;datalist&gt;</code></td></tr>
+                    </table>
+                    <p style="margin-top:15px; font-size:18px; color:#94a3b8;">Avui els navegadors porten aquests components integrats, fent innecessària la càrrega de la llibreria i els seus arxius CSS externs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 17: LAB 3 -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 3: jQuery UI en Acció <i class="fa-solid fa-laptop-code" style="color: var(--accent-green);"></i></h2>
+        <div class="content-area">
+            <p>Comprova el funcionament. Aquest laboratori ja inclou la llibreria UI connectada.</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label">HTML</div>
+                        <textarea class="lab-editor" id="html-code-3" spellcheck="false">
+<div id="caixa" style="width:150px; background:#0ea5e9; color:white; padding:15px; border-radius:8px; cursor:move; text-align:center;">
+  Arrossega'm
+</div>
+
+<div style="margin-top: 30px;">
+  <label style="font-family:sans-serif; font-weight:bold;">Tria una data:</label>
+  <input type="text" id="calendari" style="padding:8px; font-size:16px;">
+</div>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label">JavaScript (jQuery UI)</div>
+                        <textarea class="lab-editor" id="js-code-3" spellcheck="false">
+// Activa el moviment drag & drop
+$("#caixa").draggable();
+
+// Activa el giny de calendari
+$("#calendari").datepicker();
+
+// Prova d'afegir: $("#caixa").resizable();
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(3)"><i class="fa-solid fa-play"></i> Executar</button>
+                </div>
+                <iframe id="output-3" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Barra de Controls -->
+<div id="controls">
+    <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+    <div id="progress">Diapositiva 1 / 17</div>
+    <button class="ctrl-btn" id="btn-next">Següent <i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Lògica de Presentació i Laboratoris -->
+<script>
+    // SISTEMA DE DIAPOSITIVES
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((s, index) => {
+            s.classList.remove('active');
+            if (index === currentSlide) s.classList.add('active');
+        });
+        progress.innerText = `Diapositiva ${currentSlide + 1} / ${slides.length}`;
+        
+        // Auto-executa el laboratori si es visualitza la diapositiva per primer cop i no està buit l'iframe
+        if(currentSlide === 4) runLabIfEmpty(1);
+        if(currentSlide === 8) runLabIfEmpty(2);
+        if(currentSlide === 16) runLabIfEmpty(3);
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        // No canviar de slide si s'està escrivint a un textarea (Laboratoris)
+        if (e.target.tagName === 'TEXTAREA') return;
+
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentSlide > 0) { currentSlide--; updateSlides(); }
+        }
+    });
+
+    // SISTEMA DE LABORATORIS (Solució a l'error d'execució i EOF de JS)
+    function runLab(id) {
+        const html = document.getElementById('html-code-' + id).value;
+        const js = document.getElementById('js-code-' + id).value;
+        const iframe = document.getElementById('output-' + id);
+        
+        // Es codifica tot el JS de l'usuari en un format segur de URI per evitar errors d'avaluació de caràcters especials
+        // o problemes amb tancaments d'etiquetes script dins de les variables JavaScript.
+        const encodedJs = encodeURIComponent(js);
+        
+        // Generem els tancaments d'script per parts perquè el parser HTML no s'hi encalli accidentalment
+        const sOpen = "<script";
+        const sClose = "</" + "script>";
+        
+        const content = `
+            <!DOCTYPE html>
+            <html lang="ca">
+            <head>
+                <meta charset="UTF-8">
+                <!-- Càrrega de jQuery i jQuery UI -->
+                ${sOpen} src="https://code.jquery.com/jquery-3.7.1.min.js">${sClose}
+                ${sOpen} src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js">${sClose}
+                <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #1e293b; background: #f8fafc; }
+                </style>
+            </head>
+            <body>
+                ${html}
+                ${sOpen}>
+                    // Executem el codi de forma neta i protegida d'errors d'escapament de cadenes
+                    window.onload = function() {
+                        try {
+                            const decodedJs = decodeURIComponent("${encodedJs}");
+                            const executeCode = new Function(decodedJs);
+                            executeCode();
+                        } catch(e) {
+                            document.body.innerHTML += '<div style="color:red; margin-top:10px; padding:10px; border:1px solid red;"><b>Error JS:</b> ' + e.message + '</div>';
+                        }
+                    };
+                ${sClose}
+            </body>
+            </html>
+        `;
+        
+        iframe.srcdoc = content;
+    }
+
+    function runLabIfEmpty(id) {
+        const iframe = document.getElementById('output-' + id);
+        if (!iframe.srcdoc || iframe.srcdoc === "") {
+            runLab(id);
+        }
+    }
+
+    // Inicialització
+    updateSlides();
+</script>
+
+</body>
+</html>

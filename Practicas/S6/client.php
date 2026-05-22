@@ -58,38 +58,47 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
                 </div>
             <?php } ?>
 
-            <?php if (!empty($hotels)) { ?>
-                <div class="panel panel-info panel-hotels">
-                    <div class="panel-heading">
-                        <strong>Hotels disponibles</strong>
+            <?php if (!empty($hotels)) { 
+                // Ordenem hotels per estrelles (DESC) i preu (ASC)
+                usort($hotels, function($a, $b) {
+                    if ($a['stars'] == $b['stars']) {
+                        return $a['price_per_night'] <=> $b['price_per_night'];
+                    }
+                    return $b['stars'] <=> $a['stars'];
+                });
+                $topHotels = array_slice($hotels, 0, 3);
+            ?>
+                <div class="panel panel-warning panel-hotels" style="border-color: #faebcc;">
+                    <div class="panel-heading" style="background-color: #fcf8e3; color: #8a6d3b; border-color: #faebcc;">
+                        <strong><span class="glyphicon glyphicon-star"></span> Els nostres hotels destacats</strong>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-condensed table-no-margin">
-                            <thead>
-                                <tr>
-                                    <th>Hotel</th>
-                                    <th>Ciutat</th>
-                                    <th>Estrelles</th>
-                                    <th>Piscina</th>
-                                    <th>Spa</th>
-                                    <th>Gimnàs</th>
-                                    <th>Preu/Nit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($hotels as $hotel) { ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($hotel['name']); ?></td>
-                                        <td><?php echo htmlspecialchars($hotel['city_name']); ?></td>
-                                        <td><?php echo (int)$hotel['stars']; ?></td>
-                                        <td><?php echo ((int)$hotel['has_pool'] === 1) ? 'Si' : 'No'; ?></td>
-                                        <td><?php echo ((int)$hotel['has_spa'] === 1) ? 'Si' : 'No'; ?></td>
-                                        <td><?php echo ((int)$hotel['has_gym'] === 1) ? 'Si' : 'No'; ?></td>
-                                        <td><?php echo number_format((float)$hotel['price_per_night'], 2); ?> EUR</td>
-                                    </tr>
-                                <?php } ?>
-                            </tbody>
-                        </table>
+                    <div class="panel-body">
+                        <div class="row">
+                            <?php foreach ($topHotels as $hotel) { ?>
+                                <div class="col-md-4">
+                                    <div class="thumbnail text-center" style="border: 2px solid #faebcc; border-radius: 8px;">
+                                        <div class="caption">
+                                            <h4 style="color: #8a6d3b; font-weight: bold; height: 40px;"><?php echo htmlspecialchars($hotel['name']); ?></h4>
+                                            <p class="text-muted"><span class="glyphicon glyphicon-map-marker"></span> <?php echo htmlspecialchars($hotel['city_name']); ?></p>
+                                            <p style="font-size: 1.2em;">
+                                                <?php for($i=0; $i<$hotel['stars']; $i++) { echo '⭐'; } ?>
+                                            </p>
+                                            <h3 style="color: #333; margin-top: 10px;"><?php echo number_format((float)$hotel['price_per_night'], 2); ?> € <small>/ nit</small></h3>
+                                            <hr style="margin: 10px 0;">
+                                            <p class="small text-muted" style="height: 20px;">
+                                                <?php 
+                                                $extras = [];
+                                                if((int)$hotel['has_pool'] === 1) $extras[] = "Piscina";
+                                                if((int)$hotel['has_spa'] === 1) $extras[] = "Spa";
+                                                if((int)$hotel['has_gym'] === 1) $extras[] = "Gimnàs";
+                                                echo !empty($extras) ? implode(" · ", $extras) : "Dormitori simple";
+                                                ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                        </div>
                     </div>
                 </div>
             <?php } ?>
@@ -125,14 +134,12 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
 
                 <div class="form-group autocomplete-group">
                     <label for="ciutatSearch">Auto-completar ciutat (Ajax)</label>
-                    <input type="text" class="form-control" id="ciutatSearch" placeholder="Escriu les inicials de la ciutat..." autocomplete="off">
-                    <ul id="ciutatSuggestions" class="suggestion-list"></ul>
+                    <input type="text" class="form-control" id="ciutatSearch" placeholder="Escriu les inicials de la ciutat...">
                 </div>
 
                 <div class="form-group autocomplete-group">
                     <label for="hotelSearch">Auto-completar hotel (Ajax)</label>
-                    <input type="text" class="form-control" id="hotelSearch" name="hotelNom" placeholder="Escriu les inicials de l'hotel..." autocomplete="off">
-                    <ul id="hotelSuggestions" class="suggestion-list"></ul>
+                    <input type="text" class="form-control" id="hotelSearch" name="hotelNom" placeholder="Escriu les inicials de l'hotel...">
                 </div>
 
                 <!-- Select: Selecció de ciutat de destinació -->
@@ -202,24 +209,8 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
                     <span class="error" id="errorTipusHabitacio">Selecciona un tipus d'habitació</span>
                 </div>
 
-                <!-- Comentaris opcionals -->
-                <div class="form-group">
-                    <label for="comentaris">Comentaris o Peticions Especials</label>
-                    <textarea class="form-control" id="comentaris" name="comentaris" rows="4" placeholder="Indica qualsevol petició especial..."></textarea>
-                </div>
-
-                <!-- Botó enviar -->
-                <div class="form-group actions-group">
-                    <button type="button" id="btnPreview" class="btn btn-info">
-                        <span class="glyphicon glyphicon-eye-open"></span> Previsualitzar
-                    </button>
-                    <button type="reset" id="btnNetejar" class="btn btn-default btn-gap-left">
-                        <span class="glyphicon glyphicon-refresh"></span> Netejar
-                    </button>
-                    <button type="submit" class="btn btn-primary btn-reservar btn-gap-left">
-                        <span class="glyphicon glyphicon-ok"></span> Confirmar Reserva
-                    </button>
-                </div>
+                <!-- Camp Ocult per desar les Peticions Especials de jQuery -->
+                <input type="hidden" id="comentarisHidden" name="comentaris" value="">
 
                 <!-- SECCIÓ DE PETICIONS ESPECIALS (Requisit jQuery) -->
                 <div class="panel panel-default" style="margin-top: 20px;">
@@ -237,6 +228,19 @@ list($cities, $hotels, $dbWarning) = load_client_page_data();
                         </ul>
                         <button class="btn btn-warning btn-sm" type="button" id="btnDestacarPeticions">Destacar peticions senars i amb filtre</button>
                     </div>
+                </div>
+
+                <!-- Botó enviar -->
+                <div class="form-group actions-group">
+                    <button type="button" id="btnPreview" class="btn btn-info">
+                        <span class="glyphicon glyphicon-eye-open"></span> Previsualitzar
+                    </button>
+                    <button type="reset" id="btnNetejar" class="btn btn-default btn-gap-left">
+                        <span class="glyphicon glyphicon-refresh"></span> Netejar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-reservar btn-gap-left">
+                        <span class="glyphicon glyphicon-ok"></span> Confirmar Reserva
+                    </button>
                 </div>
 
                 <div id="previewReserva" class="alert alert-info preview-reserva">

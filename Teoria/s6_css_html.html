@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 i CSS3 Avançat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* CSS Base */
+        :root {
+            --bg-color: #0f172a;      /* Slate 900 */
+            --text-color: #f8fafc;    /* Slate 50 */
+            --accent-pink: #ec4899;   /* Pink per CSS */
+            --accent-orange: #f97316; /* Orange per HTML5 */
+            --accent-blue: #38bdf8;
+            --box-bg: #1e293b;        /* Slate 800 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; 
+        }
+
+        #deck {
+            position: relative;
+            width: 100%; height: calc(100% - 60px); 
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 40px 80px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Tipografia */
+        h1 { font-size: 65px; text-align: center; margin-bottom: 20px; font-weight: 800; }
+        h1 span.css { color: var(--accent-pink); }
+        h1 span.html { color: var(--accent-orange); }
+        
+        h2.slide-title {
+            font-size: 42px; margin-bottom: 30px;
+            border-left: 8px solid var(--accent-pink); padding-left: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        h2.slide-title.html-title { border-left-color: var(--accent-orange); }
+        
+        h3 { font-size: 28px; color: var(--accent-blue); margin-bottom: 15px; margin-top: 10px; }
+        h3.css-sub { color: var(--accent-pink); }
+        h3.html-sub { color: var(--accent-orange); }
+        
+        p, li { font-size: 22px; line-height: 1.6; margin-bottom: 15px; }
+        
+        /* Layouts */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .two-column { display: flex; gap: 40px; height: 100%; align-items: stretch; }
+        .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        ul.bullet-list { list-style: none; }
+        ul.bullet-list li { position: relative; padding-left: 30px; }
+        ul.bullet-list li::before { content: '▹'; color: var(--accent-blue); font-size: 28px; position: absolute; left: 0; top: -2px; }
+        ul.bullet-list.css-list li::before { color: var(--accent-pink); }
+        ul.bullet-list.html-list li::before { color: var(--accent-orange); }
+
+        /* Caixes Destacades */
+        .info-box {
+            background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569;
+            margin-bottom: 20px;
+        }
+        .highlight-box {
+            background: rgba(236, 72, 153, 0.1); border-left: 5px solid var(--accent-pink);
+            padding: 20px; border-radius: 0 8px 8px 0; margin-top: auto;
+        }
+
+        /* Codi */
+        pre {
+            background-color: #020617; border: 1px solid #334155; border-radius: 8px;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 16px;
+            overflow-x: auto; margin-bottom: 20px; color: #e2e8f0;
+        }
+        code { font-family: 'JetBrains Mono', monospace; color: var(--accent-blue); background: #1e293b; padding: 2px 6px; border-radius: 4px; }
+        .com { color: #64748b; font-style: italic; } .str { color: #a6e22e; } .fn { color: #61afef; } .tag { color: #e06c75; } .kw { color: #c678dd; } .prop { color: #56b6c2; } .val { color: #d19a66; }
+
+        /* Taules */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5); border-radius: 8px; overflow: hidden; }
+        th, td { border-bottom: 1px solid #334155; padding: 10px 15px; text-align: left; color: #e2e8f0; font-size: 20px; }
+        th { background-color: rgba(249, 115, 22, 0.2); color: #fff; }
+
+        /* Laboratoris (Editor Interactiu) */
+        .lab-container { display: flex; flex-direction: column; height: 100%; gap: 15px; flex-grow: 1; min-height: 400px; }
+        .lab-editors { display: flex; gap: 20px; height: 180px; flex-shrink: 0; }
+        .lab-pane { flex: 1; display: flex; flex-direction: column; }
+        .lab-label { background: #334155; padding: 8px 15px; font-weight: bold; border-radius: 8px 8px 0 0; font-size: 16px; }
+        .lab-editor {
+            width: 100%; flex-grow: 1; background: #020617; color: #e2e8f0; border: 1px solid #334155;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 14px; resize: none; border-radius: 0 0 8px 8px;
+        }
+        .lab-editor:focus { outline: none; border-color: var(--accent-pink); }
+        .lab-controls { display: flex; justify-content: flex-end; flex-shrink: 0; }
+        .btn-run { background: var(--accent-pink); color: #fff; border: none; padding: 10px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-run.orange { background: var(--accent-orange); }
+        .btn-run:hover { filter: brightness(1.2); }
+        .lab-output { flex-grow: 1; border: 3px solid #334155; border-radius: 8px; background: #fff; width: 100%; min-height: 200px; }
+
+        /* Controls de presentació (Barra inferior) */
+        #controls {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #020617; border-top: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+            z-index: 100;
+        }
+        .ctrl-btn {
+            background: transparent; color: var(--text-color); border: 1px solid #334155;
+            padding: 8px 20px; font-size: 18px; border-radius: 6px; cursor: pointer; font-family: 'Outfit';
+        }
+        .ctrl-btn:hover { background: #1e293b; color: var(--accent-blue); }
+        #progress { font-size: 18px; color: #94a3b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+
+    <!-- SLIDE 1: Títol -->
+    <section class="slide active">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <div style="display: flex; gap: 30px; font-size: 120px; margin-bottom: 30px;">
+                <i class="fa-brands fa-css3-alt" style="color: var(--accent-pink);"></i>
+                <i class="fa-brands fa-html5" style="color: var(--accent-orange);"></i>
+            </div>
+            <h1>Poder Natiu: <span class="css">CSS3</span> i <span class="html">HTML5</span></h1>
+            <p style="font-size: 32px; color: #94a3b8; margin-top: 20px; text-align: center;">Animacions, Controls Avançats i Drag&Drop<br>sense dependre de llibreries externes</p>
+            <p style="margin-top: 50px; color: var(--text-color); font-size: 20px; background: #1e293b; padding: 10px 20px; border-radius: 20px;"><i class="fa-solid fa-keyboard"></i> Utilitza les fletxes del teclat per navegar</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Intro CSS3 Transitions -->
+    <section class="slide">
+        <h2 class="slide-title">1. Transicions CSS3 <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-pink);"></i></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="css-sub">El fi de les animacions per JS</h3>
+                    <p>Antigament utilitzàvem JavaScript per moure objectes pas a pas o canviar-ne l'opacitat. Això consumia molta CPU i bloquejava el fil principal.</p>
+                    <p>Amb <strong>CSS3 Transitions</strong>, el canvi d'estat d'un element és processat directament per la targeta gràfica (GPU), sent extremadament fluid i alliberant el navegador.</p>
+                    
+                    <div class="highlight-box">
+                        <p style="margin:0; font-size:18px;"><strong>Sintaxi bàsica:</strong><br><code>transition: [propietat] [durada] [corba] [retard];</code></p>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="css-sub">Exemple Pràctic (Hover)</h3>
+                    <p>El canvi es dispara automàticament quan s'aplica una pseudo-classe com <code>:hover</code> o quan s'afegeix una classe via JS.</p>
+<pre>
+<span class="tag">.boto</span> {
+  <span class="prop">background-color</span>: <span class="val">blue</span>;
+  <span class="prop">transform</span>: <span class="val">scale(1)</span>;
+  <span class="com">/* Anima qualsevol canvi durant 0.3 segons */</span>
+  <span class="prop">transition</span>: <span class="val">all 0.3s ease-in-out</span>;
+}
+
+<span class="tag">.boto:hover</span> {
+  <span class="prop">background-color</span>: <span class="val">red</span>;
+  <span class="prop">transform</span>: <span class="val">scale(1.1)</span>; <span class="com">/* Es fa més gran fluidament */</span>
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: CSS3 Keyframes -->
+    <section class="slide">
+        <h2 class="slide-title">2. Animacions d'Alta Complexitat</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="css-sub">@keyframes</h3>
+                    <p>Si una transició serveix per anar d'un punt A a un punt B de cop, els <strong>Keyframes</strong> permeten definir una línia de temps complexa amb múltiples parades (0%, 50%, 100%).</p>
+                    
+                    <ul class="bullet-list css-list">
+                        <li>Es reprodueixen de forma autònoma un cop aplicades.</li>
+                        <li>Poden ser infinites amb la propietat <code>infinite</code>.</li>
+                        <li>Permeten alternar direccions d'anada i tornada (<code>alternate</code>).</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="css-sub">Definir i Executar</h3>
+<pre>
+<span class="com">/* 1. Definim la línia de temps de l'animació */</span>
+<span class="kw">@keyframes</span> <span class="fn">batec</span> {
+  <span class="val">0%</span>   { <span class="prop">transform</span>: <span class="val">scale(1)</span>; }
+  <span class="val">50%</span>  { <span class="prop">transform</span>: <span class="val">scale(1.2)</span>; }
+  <span class="val">100%</span> { <span class="prop">transform</span>: <span class="val">scale(1)</span>; }
+}
+
+<span class="com">/* 2. L'apliquem a l'element */</span>
+<span class="tag">.cor</span> {
+  <span class="prop">animation-name</span>: <span class="val">batec</span>;
+  <span class="prop">animation-duration</span>: <span class="val">1s</span>;
+  <span class="prop">animation-iteration-count</span>: <span class="val">infinite</span>;
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: LAB 1 CSS3 -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 1: Laboratori d'Animacions <i class="fa-solid fa-flask" style="color: var(--accent-pink);"></i></h2>
+        <div class="content-area">
+            <p style="margin-bottom: 10px; font-size: 18px;">Modifica el CSS per veure com canvia la transició o afegeix propietats noves al keyframe <code>vibrar</code> (ex: canviar el color de fons).</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#831843;">HTML i Elements</div>
+                        <textarea class="lab-editor" id="html-1" spellcheck="false" style="color:#e2e8f0;">
+<div class="caixa-transicio">Passa el ratolí per sobre!</div>
+
+<div class="caixa-animada">Sóc una animació infinita!</div>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#be185d;">CSS (Dissenya-ho!)</div>
+                        <textarea class="lab-editor" id="css-1" spellcheck="false" style="color:#fbcfe8;">
+.caixa-transicio {
+  background: #3b82f6; color: white; padding: 20px; 
+  width: 250px; margin-bottom: 30px; cursor: pointer;
+  transition: all 0.4s ease; /* Prova a canviar la duració a 2s */
+}
+.caixa-transicio:hover {
+  background: #10b981;
+  transform: translateX(50px) scale(1.1);
+  border-radius: 50px;
+}
+
+.caixa-animada {
+  background: #ec4899; color: white; padding: 20px; width: 250px;
+  animation: vibrar 2s infinite alternate;
+}
+@keyframes vibrar {
+  0% { transform: rotate(-5deg); }
+  100% { transform: rotate(5deg); background: #f59e0b; }
+}
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(1)"><i class="fa-solid fa-play"></i> Aplicar Estils</button>
+                </div>
+                <iframe id="out-1" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: HTML5 Inputs Natius -->
+    <section class="slide">
+        <h2 class="slide-title html-title">3. Nous Inputs Natius d'HTML5 <i class="fa-brands fa-html5" style="color: var(--accent-orange);"></i></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="html-sub">Adéu a ginys externs complexos</h3>
+                    <p>Abans necessitàvem llibreries pesades només per mostrar un calendari o un control de rang. HTML5 va estandarditzar la creació de controls de formulari que es renderitzen de forma nativa segons el Sistema Operatiu (iOS, Android, Windows).</p>
+                    
+                    <ul class="bullet-list html-list">
+                        <li><strong>Data i Hora:</strong> Al mòbil, el navegador obre automàticament l'esfera tàctil.</li>
+                        <li><strong>Rang i Color:</strong> Apareixen selectors natius de paletes i cursors sense picar JS addicional.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="html-sub">Els Tipus d'Input Natius</h3>
+                    <table>
+                        <tr><th>Codi HTML</th><th>Resultat Visual</th></tr>
+                        <tr><td><code>type="date"</code></td><td>📅 Calendari complet (Datepicker)</td></tr>
+                        <tr><td><code>type="time"</code></td><td>⌚ Selector d'hores i minuts</td></tr>
+                        <tr><td><code>type="range"</code></td><td>🎚️ Slider lliscant (ex: volum o preu)</td></tr>
+                        <tr><td><code>type="number"</code></td><td>🔢 Spinner amb fletxes d'increment</td></tr>
+                        <tr><td><code>type="color"</code></td><td>🎨 Paleta de colors del sistema</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: UI Avançada (Details, Progress) -->
+    <section class="slide">
+        <h2 class="slide-title html-title">4. Controls de UI Sense JavaScript</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="html-sub">Pestanyes Expansibles (Accordion)</h3>
+                    <p>Substitueix els antics scripts tipus "slideToggle" per un funcionament 100% natiu i accessible. Fent clic al <code>&lt;summary&gt;</code>, el bloc de <code>&lt;details&gt;</code> es desplega automàticament.</p>
+<pre>
+<span class="tag">&lt;details&gt;</span>
+  <span class="tag">&lt;summary&gt;</span>Com funciona l'enviament?<span class="tag">&lt;/summary&gt;</span>
+  <span class="tag">&lt;p&gt;</span>Els enviaments triguen 24h a la península.<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/details&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="html-sub">Barres de Progrés i Mesura</h3>
+                    <p>Etiquetes semàntiques que els navegadors renderitzen gràficament amb colors d'alerta automàtics segons els llindars establerts.</p>
+<pre>
+<span class="com">&lt;!-- Barra de càrrega típica --&gt;</span>
+<span class="tag">&lt;progress</span> <span class="prop">max</span>=<span class="val">"100"</span> <span class="prop">value</span>=<span class="val">"70"</span><span class="tag">&gt;</span>70%<span class="tag">&lt;/progress&gt;</span>
+
+<span class="com">&lt;!-- Indicador tipus velocímetre (verd, groc, vermell) --&gt;</span>
+<span class="tag">&lt;meter</span> <span class="prop">min</span>=<span class="val">"0"</span> <span class="prop">max</span>=<span class="val">"100"</span> 
+       <span class="prop">low</span>=<span class="val">"30"</span> <span class="prop">high</span>=<span class="val">"80"</span> <span class="prop">value</span>=<span class="val">"85"</span><span class="tag">&gt;</span>
+  85 (Zona de Perill)
+<span class="tag">&lt;/meter&gt;</span>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: Datalist i Modals -->
+    <section class="slide">
+        <h2 class="slide-title html-title">5. Autocompletar i Finestres Modals</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="html-sub">El <code>&lt;datalist&gt;</code></h3>
+                    <p>Proporciona un menú de "Suggeriments" autocompletables a qualsevol input de text, respectant el filtre de cerca i l'estil natiu.</p>
+<pre>
+<span class="tag">&lt;input</span> <span class="prop">type</span>=<span class="val">"text"</span> <span class="prop">list</span>=<span class="val">"fruites"</span><span class="tag">&gt;</span>
+
+<span class="tag">&lt;datalist</span> <span class="prop">id</span>=<span class="val">"fruites"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;option</span> <span class="prop">value</span>=<span class="val">"Poma"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;option</span> <span class="prop">value</span>=<span class="val">"Plàtan"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;option</span> <span class="prop">value</span>=<span class="val">"Pera"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/datalist&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="html-sub">El <code>&lt;dialog&gt;</code> (Finestres Modals)</h3>
+                    <p>Oblida't de gestionar fons foscos, z-index o bloquejar l'scroll. El component <code>&lt;dialog&gt;</code> ho fa sol amb una simple crida JavaScript.</p>
+<pre>
+<span class="tag">&lt;dialog</span> <span class="prop">id</span>=<span class="val">"meuDialog"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;h3&gt;</span>Avís Important<span class="tag">&lt;/h3&gt;</span>
+  <span class="tag">&lt;button</span> <span class="prop">onclick</span>=<span class="val">"meuDialog.close()"</span><span class="tag">&gt;</span>Tancar<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/dialog&gt;</span>
+
+<span class="tag">&lt;script&gt;</span>
+  <span class="com">// L'obre bloquejant la resta de la pàgina (Modal)</span>
+  document.<span class="fn">getElementById</span>(<span class="str">'meuDialog'</span>).<span class="fn">showModal</span>();
+<span class="tag">&lt;/script&gt;</span>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: LAB 2 HTML5 -->
+    <section class="slide">
+        <h2 class="slide-title html-title">LAB 2: El poder dels Controls HTML5 <i class="fa-solid fa-laptop-code" style="color: var(--accent-orange);"></i></h2>
+        <div class="content-area">
+            <p style="margin-bottom: 10px; font-size: 18px;">Mou l'slider per veure l'esdeveniment en temps real. Clica "Obrir Finestra" per veure el component <code>&lt;dialog&gt;</code> natiu.</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#9a3412;">HTML5 Controls</div>
+                        <textarea class="lab-editor" id="html-2" spellcheck="false" style="color:#e2e8f0;">
+<!-- Accordion natiu -->
+<details style="margin-bottom: 20px; cursor:pointer; background:#eee; padding:10px;">
+  <summary style="font-weight:bold;">Veure Més Opcions (Clic aquí)</summary>
+  <p style="margin-top:10px;">Aquest contingut estava amagat i es mostra sense JS!</p>
+</details>
+
+<!-- Slider interactiu -->
+<label>Selecciona el volum:</label>
+<input type="range" id="sliderVolum" min="0" max="100" value="50">
+<strong><span id="resultatVolum">50</span>%</strong>
+
+<br><br>
+<button id="btnObrir" style="padding:10px; background:#f97316; color:white; border:none; border-radius:4px; cursor:pointer;">Obrir Finestra Modal</button>
+
+<!-- Dialog natiu -->
+<dialog id="finestra" style="padding:20px; border-radius:8px; border:2px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  <h3>Sóc un diàleg natiu!</h3>
+  <p>El fons de darrere no es pot clicar.</p>
+  <button id="btnTancar" style="padding:5px 10px; cursor:pointer;">Tancar</button>
+</dialog>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#ea580c;">JavaScript</div>
+                        <textarea class="lab-editor" id="js-2" spellcheck="false" style="color:#fde047;">
+// 1. Vincular l'Slider amb el text en temps real
+const slider = document.getElementById('sliderVolum');
+const text = document.getElementById('resultatVolum');
+
+slider.addEventListener('input', (e) => {
+  text.textContent = e.target.value;
+});
+
+// 2. Gestionar la finestra Modal (Dialog)
+const dialog = document.getElementById('finestra');
+
+document.getElementById('btnObrir').addEventListener('click', () => {
+  dialog.showModal(); // Obre i bloqueja el fons
+});
+
+document.getElementById('btnTancar').addEventListener('click', () => {
+  dialog.close(); // Tanca nativament
+});
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run orange" onclick="runLab(2)"><i class="fa-solid fa-play"></i> Renderitzar i Executar JS</button>
+                </div>
+                <iframe id="out-2" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: Drag and Drop API -->
+    <section class="slide">
+        <h2 class="slide-title html-title">6. Drag and Drop API (Nativa)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="html-sub">Fent objectes Arrossegables</h3>
+                    <p>Qualsevol element de la web es pot fer arrossegable simplement afegint l'atribut <code>draggable="true"</code>.</p>
+<pre>
+<span class="tag">&lt;div</span> <span class="prop">id</span>=<span class="val">"caixa1"</span> <span class="prop">draggable</span>=<span class="val">"true"</span><span class="tag">&gt;</span>
+  Agafa'm!
+<span class="tag">&lt;/div&gt;</span>
+</pre>
+                    <h3 style="margin-top: 15px;" class="html-sub">Enviant Dades (DataTransfer)</h3>
+                    <p>Quan l'usuari fa clic i arrossega, hem de "guardar" l'identificador de l'element dins l'objecte especial <code>dataTransfer</code> per saber què estem movent.</p>
+<pre>
+<span class="kw">const</span> caixa = document.<span class="fn">getElementById</span>(<span class="str">'caixa1'</span>);
+
+caixa.<span class="fn">addEventListener</span>(<span class="str">'dragstart'</span>, (e) =&gt; {
+  <span class="com">// Guardem l'ID de l'element mogut</span>
+  e.dataTransfer.<span class="fn">setData</span>(<span class="str">'text/plain'</span>, e.target.id);
+});
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="html-sub">La Zona de Recepció (Dropzone)</h3>
+                    <p>Per defecte, el navegador <strong>prohibeix</strong> deixar caure elements. Hem de deshabilitar aquesta prohibició a l'esdeveniment <code>dragover</code>.</p>
+<pre>
+<span class="kw">const</span> zona = document.<span class="fn">getElementById</span>(<span class="str">'zonaReceptora'</span>);
+
+<span class="com">// 1. Obrir les portes a rebre elements</span>
+zona.<span class="fn">addEventListener</span>(<span class="str">'dragover'</span>, (e) =&gt; {
+  e.<span class="fn">preventDefault</span>(); <span class="com">// Crucial per permetre el drop!</span>
+});
+
+<span class="com">// 2. Quan el deixen a sobre</span>
+zona.<span class="fn">addEventListener</span>(<span class="str">'drop'</span>, (e) =&gt; {
+  e.<span class="fn">preventDefault</span>();
+  <span class="com">// Recuperem l'ID que havíem guardat</span>
+  <span class="kw">const</span> idGuardat = e.dataTransfer.<span class="fn">getData</span>(<span class="str">'text/plain'</span>);
+  <span class="kw">const</span> elementMogut = document.<span class="fn">getElementById</span>(idGuardat);
+  
+  <span class="com">// Movem l'element físicament a dins de la zona</span>
+  zona.<span class="fn">appendChild</span>(elementMogut);
+});
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: LAB 3 D&D -->
+    <section class="slide">
+        <h2 class="slide-title html-title">LAB 3: Drag & Drop en temps real <i class="fa-solid fa-laptop-code" style="color: var(--accent-orange);"></i></h2>
+        <div class="content-area">
+            <p style="margin-bottom: 10px; font-size: 18px;">Fes clic i arrossega el quadrat taronja cap a la caixa amb vora discontínua. La lògica lligarà els tres esdeveniments necessaris.</p>
+            <div class="lab-container">
+                <div class="lab-editors" style="height: 220px;">
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#9a3412;">HTML</div>
+                        <textarea class="lab-editor" id="html-3" spellcheck="false" style="color:#e2e8f0;">
+<!-- L'element arrossegable -->
+<div id="peca" draggable="true" 
+     style="width:120px; height:50px; background:#f97316; color:white; padding:12px; cursor:grab; margin-bottom:20px; font-weight:bold; text-align:center; border-radius:4px;">
+  Arrossega'm
+</div>
+
+<!-- La zona receptora -->
+<div id="caixa-receptora" 
+     style="width:100%; height:120px; background:#e2e8f0; border:3px dashed #94a3b8; display:flex; align-items:center; justify-content:center; color:#475569; font-size:18px;">
+  Deixa'm caure aquí
+</div>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#ea580c;">JavaScript</div>
+                        <textarea class="lab-editor" id="js-3" spellcheck="false" style="color:#fde047;">
+const peca = document.getElementById('peca');
+const zona = document.getElementById('caixa-receptora');
+
+// En iniciar l'arrossegament
+peca.addEventListener('dragstart', (e) => {
+  e.dataTransfer.setData('id_element', e.target.id);
+});
+
+// En passar per sobre de la zona
+zona.addEventListener('dragover', (e) => {
+  e.preventDefault(); // Permet rebre l'element
+  zona.style.background = '#bfdbfe'; // Il·lumina la zona de blau
+});
+
+// Si sortim de la zona sense deixar-lo anar
+zona.addEventListener('dragleave', () => zona.style.background = '#e2e8f0');
+
+// Quan el deixem anar definitivament
+zona.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('id_element');
+  const elementMogut = document.getElementById(id);
+  
+  zona.appendChild(elementMogut);
+  zona.style.background = '#86efac'; // Es posa verd per indicar èxit
+  zona.innerHTML = ''; // Netegem el text de la zona
+  zona.appendChild(elementMogut); // El tornem a posar
+});
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run orange" onclick="runLab(3)"><i class="fa-solid fa-play"></i> Carregar Entorn Drag&Drop</button>
+                </div>
+                <iframe id="out-3" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: Resum -->
+    <section class="slide">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <i class="fa-solid fa-rocket" style="font-size: 100px; color: var(--accent-blue); margin-bottom: 40px;"></i>
+            <h2 style="font-size: 60px; margin-bottom: 30px;">Menys Codi, Més Rendiment</h2>
+            <p style="font-size: 28px; max-width: 900px; text-align: center; color: #cbd5e1; line-height: 1.6;">
+                Els navegadors moderns ofereixen components extremadament rics (<strong>Diàlegs, Calendaris, Pestanyes</strong>) i eines gràfiques superiors (<strong>Transicions CSS i Animacions de GPU</strong>) sense haver de carregar llibreries pesades. <br><br>Aprofitar els estàndards web (HTML5 i CSS3) és la clau per crear aplicacions lleugeres, accessibles i preparades per al futur.
+            </p>
+        </div>
+    </section>
+
+</div>
+
+<!-- Controls Navegació -->
+<div id="controls">
+    <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+    <div id="progress">Diapositiva 1 / 11</div>
+    <button class="ctrl-btn" id="btn-next">Següent <i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Lògica Presentació -->
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((s, index) => {
+            s.classList.remove('active');
+            if (index === currentSlide) s.classList.add('active');
+        });
+        progress.innerText = `Diapositiva ${currentSlide + 1} / ${slides.length}`;
+        
+        // Executar auto-run en les diapositives de Laboratori
+        if(currentSlide === 3) runLabIfEmpty(1);
+        if(currentSlide === 7) runLabIfEmpty(2);
+        if(currentSlide === 9) runLabIfEmpty(3);
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+
+    // Control per teclat
+    document.addEventListener('keydown', (e) => {
+        // Ignorar el teclat si s'està escrivint codi dins d'un editor
+        if (e.target.tagName === 'TEXTAREA') return;
+        
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentSlide > 0) { currentSlide--; updateSlides(); }
+        }
+    });
+
+    // Sistema de Laboratoris interactius injectant codi a l'iframe
+    function runLab(id) {
+        const htmlInput = document.getElementById('html-' + id);
+        const cssInput = document.getElementById('css-' + id);
+        const jsInput = document.getElementById('js-' + id);
+        
+        const html = htmlInput ? htmlInput.value : '';
+        const css = cssInput ? cssInput.value : '';
+        const js = jsInput ? jsInput.value : '';
+        const iframe = document.getElementById('out-' + id);
+        
+        // Creem un HTML on injectem en viu l'HTML, CSS i JS de l'usuari
+        const content = `
+            <!DOCTYPE html>
+            <html lang="ca">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #1e293b; background: #f8fafc; margin:0; }
+                    /* CSS de l'usuari injectat */
+                    ${css}
+                </style>
+            </head>
+            <body>
+                ${html}
+                <script>
+                    window.onload = function() {
+                        try {
+                            const rawJs = decodeURIComponent("${encodeURIComponent(js)}");
+                            if (rawJs.trim().length > 0) {
+                                // Avaluem el codi de manera segura
+                                const executeCode = new Function(rawJs);
+                                executeCode();
+                            }
+                        } catch(e) {
+                            document.body.innerHTML += '<div style="color:red; margin-top:10px; padding:10px; border:1px solid #fca5a5; background:#fee2e2; border-radius:4px;"><b>Error de JavaScript:</b> ' + e.message + '</div>';
+                        }
+                    };
+                <\/script>
+            </body>
+            </html>
+        `;
+        
+        iframe.srcdoc = content;
+    }
+
+    // Executar-lo només la primera vegada que es mostra per evitar sobreescriure si l'usuari hi està treballant
+    function runLabIfEmpty(id) {
+        const iframe = document.getElementById('out-' + id);
+        if (!iframe.srcdoc || iframe.srcdoc === "") {
+            runLab(id);
+        }
+    }
+
+    // Inicialitzem
+    updateSlides();
+</script>
+
+</body>
+</html>
