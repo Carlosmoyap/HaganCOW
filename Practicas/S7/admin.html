@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administració de Reserves (JSON API)</title>
+    <!-- Bootstrap per al disseny responsive -->
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <!-- Fulls d'estil personalitzats -->
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-header {
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #38bdf8;
+        }
+        .btn-load {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        #taulaReservesContainer {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra de navegació amb Bootstrap -->
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="index.html">
+                    <span class="glyphicon glyphicon-home"></span> Hotel Paradise
+                </a>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="client.php">Reservar</a></li>
+                <li class="active"><a href="admin.html">Admin (AJAX/JSON)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="admin-header">
+            <h1><span class="glyphicon glyphicon-list-alt"></span> Tauler d'Administració de Reserves</h1>
+            <p class="text-muted">Aquesta pàgina empra <strong>AJAX</strong> per recuperar les últimes reserves via <strong>JSON</strong> de la base de dades, directament cridant a <code>api.php</code>.</p>
+        </div>
+
+        <button id="btnLoadReservations" class="btn btn-primary btn-lg btn-load">
+            <span class="glyphicon glyphicon-cloud-download"></span> Carregar Llista de Reserves
+        </button>
+        <hr>
+
+        <div id="loading" style="display: none;" class="text-info">
+            <strong><span class="glyphicon glyphicon-refresh"></span> Connectant amb l'API...</strong>
+        </div>
+
+        <div id="taulaReservesContainer" class="panel panel-info">
+            <div class="panel-heading">
+                <strong>Reserves Registrades (<span id="reservesCount">0</span>)</strong>
+            </div>
+            <div class="table-responsive">
+                <!-- La taula es construirà dinàmicament aquí -->
+                <table class="table table-striped table-hover" id="taulaReserves">
+                    <thead>
+                        <tr>
+                            <th>Codi</th>
+                            <th>Nom Client</th>
+                            <th>Email</th>
+                            <th>Telèfon</th>
+                            <th>Hotel / Ciutat</th>
+                            <th>Entrada</th>
+                            <th>Sortida</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyReserves">
+                        <!-- Iteracions DOM afegides via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script natiu JS Vanilla per Fetch i JSON (Com apareix a la teoria/lab) -->
+    <script>
+        document.getElementById('btnLoadReservations').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const btn = this;
+            const container = document.getElementById('taulaReservesContainer');
+            const tbody = document.getElementById('tbodyReserves');
+            const loading = document.getElementById('loading');
+            
+            // Efectes visuals inicials
+            btn.disabled = true;
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+            
+            // 4. Fem la connexió client/servidor amb AJAX via fetch (tal i com la teoria recomana per JSON)
+            fetch('api.php')
+                // 3a. Parser: Convertir la resposta (string JSON) en un objecte JavaScript via promesa
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    
+                    if (data.status === 'success') {
+                        // Afegim contador
+                        document.getElementById('reservesCount').innerText = data.count;
+                        
+                        // 3b. Modificar el DOM de forma dinàmica creant files per a la taula
+                        data.data.forEach(reserva => {
+                            const tr = document.createElement('tr');
+                            
+                            // Decidim quina ubicació mostrar (Hotel preferentment, sinó només ciutat)
+                            const ubicacio = reserva.hotel_name 
+                                    ? reserva.hotel_name 
+                                    : ('<em class="text-muted">' + reserva.city_name + ' (Sense Hotel)</em>');
+
+                            tr.innerHTML = `
+                                <td><strong>${reserva.reservation_code}</strong></td>
+                                <td>${reserva.client_name}</td>
+                                <td><a href="mailto:${reserva.email}">${reserva.email}</a></td>
+                                <td>${reserva.phone}</td>
+                                <td>${ubicacio}</td>
+                                <td>${reserva.checkin_date}</td>
+                                <td>${reserva.checkout_date}</td>
+                            `;
+                            
+                            // Inserim la fila generada a la taula
+                            tbody.appendChild(tr);
+                        });
+                        
+                        // Mostrem finalment el contenidor global
+                        container.style.display = 'block';
+                    } else {
+                        alert('Error carregant reserves: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    alert('Error en la connexió d\'AJAX: ' + error.message);
+                });
+        });
+    </script>
+</body>
+</html>

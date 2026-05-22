@@ -202,137 +202,6 @@ document.addEventListener('DOMContentLoaded', function () {
         dataSortidaField.addEventListener('change', validateDates);
     }
 
-    // --- REQUISIT SESSIÓ 7: PROTOCOL DE COMUNICACIÓ JSON ---
-    var btnLoadHotelsJson = document.getElementById('btnLoadHotelsJson');
-    var btnLoadUsersJson = document.getElementById('btnLoadUsersJson');
-    var jsonContainer = document.getElementById('jsonResponseContainer');
-
-    // --- REQUISIT SESSIÓ 7: a. Implementar un parser (Parser manual) ---
-    // Aquesta funció demostra com convertir l'string JSON en un objecte JavaScript
-    // de manera manual (implementant un parser propi) o utilitzant la API nativa.
-    function parseJSONData(jsonString) {
-        console.log("Executant el parser JSON...");
-        try {
-            // L'API nativa de JavaScript converteix perfectament la resposta JSON en un objecte.
-            // Això compleix el requisit "a. Implementar un parser que permeti..."
-            return JSON.parse(jsonString);
-        } catch (e) {
-            console.error("El parser ha fallat:", e);
-            throw new Error("L'estructura rebuda no és un JSON vàlid.");
-        }
-    }
-    // -------------------------------------------------------------------
-
-    function fetchJsonData(action, button, renderCallback) {
-        var textOriginal = button.innerHTML;
-        button.innerHTML = '<span class="glyphicon glyphicon-refresh"></span> Carregant...';
-        button.disabled = true;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'server.php?ajax=1&action=' + action, true);
-        xhr.setRequestHeader('Accept', 'application/json');
-
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                button.innerHTML = textOriginal;
-                button.disabled = false;
-
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        // Ús de la funció del parser sol·licitada
-                        var jsonResponse = parseJSONData(xhr.responseText);
-                        if (jsonResponse && jsonResponse.ok) {
-                            renderCallback(jsonResponse);
-                        } else {
-                            alert("Resposta rebuda però conté errors lògics.");
-                        }
-                    } catch (error) {
-                        alert("Error de parsing JSON: " + error.message);
-                    }
-                } else {
-                    alert("Error de comunicació amb el servidor.");
-                }
-            }
-        };
-        xhr.send();
-    }
-
-    if (btnLoadHotelsJson && jsonContainer) {
-        btnLoadHotelsJson.addEventListener('click', function() {
-            fetchJsonData('get_hotels', btnLoadHotelsJson, function(jsonResponse) {
-                // b. Modificar el DOM de forma dinàmica, creant una taula que utilitzi les dades del objecte JSON.
-                console.log("Modificant el DOM per crear la taula d'hotels...");
-                
-                var html = '<div class="alert alert-success" style="margin:10px;">Missatge: <strong>' + jsonResponse.message + '</strong></div>';
-                
-                // Creació dinàmica de l'element Taula
-                var tableContainer = document.createElement('div');
-                tableContainer.innerHTML = html;
-                
-                var table = document.createElement('table');
-                table.className = 'table table-striped table-condensed table-no-margin';
-                
-                var thead = document.createElement('thead');
-                thead.innerHTML = '<tr><th>Hotel</th><th>Ciutat</th><th>Estrelles</th><th>Preu/Nit</th></tr>';
-                table.appendChild(thead);
-                
-                var tbody = document.createElement('tbody');
-
-                // Iterem sobre les dades parsejades
-                jsonResponse.hotels.forEach(function(hotel) {
-                    var tr = document.createElement('tr');
-                    tr.innerHTML = '<td>' + hotel.name + '</td><td>' + hotel.city_name + '</td><td>' + hotel.stars + ' ⭐</td><td>' + parseFloat(hotel.price_per_night).toFixed(2) + ' €</td>';
-                    tbody.appendChild(tr);
-                });
-                
-                table.appendChild(tbody);
-                tableContainer.appendChild(table);
-
-                // Modificació real i visible del DOM
-                jsonContainer.innerHTML = '';
-                jsonContainer.appendChild(tableContainer);
-                jsonContainer.style.display = 'block';
-            });
-        });
-    }
-
-    if (btnLoadUsersJson && jsonContainer) {
-        btnLoadUsersJson.addEventListener('click', function() {
-            fetchJsonData('get_users', btnLoadUsersJson, function(jsonResponse) {
-                // b. Modificar el DOM de forma dinàmica manualment amb createElement
-                var html = '<div class="alert alert-warning" style="margin:10px;">Missatge (Usuaris): <strong>' + jsonResponse.message + '</strong></div>';
-                
-                var tableContainer = document.createElement('div');
-                tableContainer.innerHTML = html;
-                
-                var table = document.createElement('table');
-                table.className = 'table table-bordered table-condensed table-no-margin';
-                table.innerHTML = '<thead class="bg-warning"><tr><th>ID</th><th>Nom Complet</th><th>Correu Electrònic</th><th>Password Hash</th><th>Rol</th></tr></thead>';
-                
-                var tbody = document.createElement('tbody');
-
-                jsonResponse.users.forEach(function(user) {
-                    var tr = document.createElement('tr');
-                    tr.innerHTML = '<td>' + user.id + '</td>' +
-                        '<td>' + user.nom + '</td>' +
-                        '<td>' + user.email + '</td>' +
-                        '<td><code style="font-size:80%;">' + user.password_hash.substring(0, 15) + '...</code></td>' +
-                        '<td><span class="label label-' + (user.rol === 'admin' ? 'danger' : 'primary') + '">' + user.rol + '</span></td>';
-                    tbody.appendChild(tr);
-                });
-                
-                table.appendChild(tbody);
-                tableContainer.appendChild(table);
-
-                // Netejem i afegim l'element dinàmic al DOM
-                jsonContainer.innerHTML = '';
-                jsonContainer.appendChild(tableContainer);
-                jsonContainer.style.display = 'block';
-            });
-        });
-    }
-    // -------------------------------------------------------------
-
     Array.prototype.forEach.call(document.querySelectorAll('input[name="tipusHabitacio"]'), function (node) {
         node.addEventListener('change', function () {
             hide(document.getElementById('errorTipusHabitacio'));
@@ -367,6 +236,21 @@ document.addEventListener('DOMContentLoaded', function () {
         previewHtml += '<div><strong>Sortida:</strong> ' + (dataSortidaField ? dataSortidaField.value : '') + '</div>';
         previewHtml += '<div><strong>Persones:</strong> ' + (personesField ? personesField.value : '') + '</div>';
         previewHtml += '<div><strong>Habitacio:</strong> ' + selectedTipus + '</div>';
+
+        // Recollim les peticions per mostrar-les a la previsualització
+        var peticionsTextList = [];
+        $('#llistaPeticions').find('li').each(function() {
+            var $textNode = $(this).contents().filter(function() {
+                return this.nodeType === 3; 
+            });
+            var text = $textNode.text().trim();
+            if (text) {
+                peticionsTextList.push(text);
+            }
+        });
+        if (peticionsTextList.length > 0) {
+            previewHtml += '<div><strong>Peticions Especials:</strong> ' + peticionsTextList.join(', ') + '</div>';
+        }
 
         if (previewContent) {
             previewContent.innerHTML = previewHtml;
@@ -500,90 +384,69 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-        // 1. AUTO-COMPLETAR AMB AJAX (jQuery)
-        var timerCiutat, timerHotel;
-
-        $('#ciutatSearch').on('input', function() {
-            var q = $(this).val().trim();
-            $('#ciutat').val(''); // Resetejem ciutat
-            clearTimeout(timerCiutat);
-
-            if (q.length === 0) {
-                $('#ciutatSuggestions').hide();
-                return;
-            }
-
-            timerCiutat = setTimeout(function() {
+        // 1. AUTO-COMPLETAR AMB AJAX I JQUERY UI (Autocomplete)
+        $('#ciutatSearch').autocomplete({
+            source: function(request, response) {
                 $.ajax({
                     url: 'server.php',
-                    data: { ajax: 1, action: 'autocomplete', type: 'city', q: q },
+                    data: { ajax: 1, action: 'autocomplete', type: 'city', q: request.term },
                     dataType: 'json',
                     success: function(res) {
-                        var $list = $('#ciutatSuggestions');
-                        $list.empty();
                         if (res && res.ok && res.items && res.items.length > 0) {
-                            $.each(res.items, function(i, item) {
-                                var $li = $('<li>').addClass('suggestion-item').text(item.label);
-                                $li.on('click', function() {
-                                    $('#ciutatSearch').val(item.name);
-                                    $('#ciutat').val(item.id);
-                                    $list.hide();
-                                });
-                                $list.append($li);
+                            var items = $.map(res.items, function(item) {
+                                return { label: item.label, value: item.name, id: item.id };
                             });
-                            $list.show();
+                            response(items);
                         } else {
-                            $list.hide();
+                            response([]);
                         }
                     }
                 });
-            }, 250);
+            },
+            select: function(event, ui) {
+                $('#ciutat').val(ui.item.id);
+                // Trigereja el canvi de ciutat (per netejar errors visuals)
+                $('#ciutat').trigger('change');
+            },
+            minLength: 1
         });
 
-        $('#hotelSearch').on('input', function() {
-            var q = $(this).val().trim();
-            clearTimeout(timerHotel);
-
-            if (q.length === 0) {
-                $('#hotelSuggestions').hide();
-                return;
-            }
-
-            timerHotel = setTimeout(function() {
+        $('#hotelSearch').autocomplete({
+            source: function(request, response) {
                 $.ajax({
                     url: 'server.php',
-                    data: { ajax: 1, action: 'autocomplete', type: 'hotel', q: q },
+                    data: { ajax: 1, action: 'autocomplete', type: 'hotel', q: request.term },
                     dataType: 'json',
                     success: function(res) {
-                        var $list = $('#hotelSuggestions');
-                        $list.empty();
                         if (res && res.ok && res.items && res.items.length > 0) {
-                            $.each(res.items, function(i, item) {
-                                var $li = $('<li>').addClass('suggestion-item').text(item.label);
-                                $li.on('click', function() {
-                                    $('#hotelSearch').val(item.name);
-                                    $list.hide();
-                                });
-                                $list.append($li);
+                            var items = $.map(res.items, function(item) {
+                                return { label: item.label, value: item.name };
                             });
-                            $list.show();
+                            response(items);
                         } else {
-                            $list.hide();
+                            response([]);
                         }
                     }
                 });
-            }, 250);
-        });
-
-        // Tancar llistes si cliquem fora
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('.autocomplete-group').length) {
-                $('.suggestion-list').hide();
-            }
+            },
+            minLength: 1
         });
 
         // 2. IMPRESSIÓ DE DADES A UNA TAULA VÍA AJAX (jQuery)
         window.submitReservaAjax = function() {
+            // Omplim el camp ocult amb les peticions afegides al panell de jQuery UI
+            var peticionsTextList = [];
+            $('#llistaPeticions').find('li').each(function() {
+                var $textNode = $(this).contents().filter(function() {
+                    return this.nodeType === 3; 
+                });
+                var text = $textNode.text().trim();
+                if (text) {
+                    peticionsTextList.push(text);
+                }
+            });
+            $('#comentarisHidden').val(peticionsTextList.join('\n'));
+
             // Recopilem les dades per fer la petició POST
             var postData = $('#formReserva').serialize() + '&ajax=1&action=reserve';
 

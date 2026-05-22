@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creació d'una API REST amb PHP i MySQL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* SETUP GLOBAL JSON STYLE */
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;    
+            --accent-yellow: #facc15; 
+            --accent-purple: #c084fc; 
+            --accent-blue: #38bdf8;
+            --box-bg: #1e293b;
+            --success: #4ade80;
+            --danger: #f87171;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; 
+        }
+
+        #deck {
+            position: relative;
+            width: 100%; height: calc(100% - 60px); 
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 40px 80px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        h1 { font-size: 65px; text-align: center; margin-bottom: 20px; font-weight: 800; }
+        h1 span.php { color: var(--accent-purple); }
+        h1 span.db { color: var(--accent-blue); }
+        
+        h2.slide-title {
+            font-size: 42px; margin-bottom: 20px;
+            border-left: 8px solid var(--accent-purple); padding-left: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        h3 { font-size: 26px; color: var(--accent-yellow); margin-bottom: 12px; margin-top: 10px; }
+        
+        p, li { font-size: 20px; line-height: 1.5; margin-bottom: 12px; }
+        
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .two-column { display: flex; gap: 30px; height: 100%; align-items: stretch; }
+        .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        ul.bullet-list { list-style: none; margin-bottom: 15px; }
+        ul.bullet-list li { position: relative; padding-left: 30px; }
+        ul.bullet-list li::before { content: '▹'; color: var(--accent-purple); font-size: 28px; position: absolute; left: 0; top: -4px; }
+
+        .info-box {
+            background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569; margin-bottom: 15px;
+        }
+
+        pre {
+            background-color: #020617; border: 1px solid #334155; border-radius: 8px;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 15px;
+            overflow-x: auto; margin-bottom: 15px; color: #e2e8f0;
+        }
+        code { font-family: 'JetBrains Mono', monospace; color: var(--accent-yellow); }
+        .tag-get { background: var(--accent-blue); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; }
+        .tag-post { background: var(--success); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; }
+        .tag-put { background: var(--accent-yellow); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; }
+        .tag-delete { background: var(--danger); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; }
+
+        #controls {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #020617; border-top: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+            z-index: 100;
+        }
+        .ctrl-btn { background: transparent; color: var(--text-color); border: 1px solid #334155; padding: 8px 20px; font-size: 18px; border-radius: 6px; cursor: pointer; }
+        .ctrl-btn:hover { background: #1e293b; color: var(--accent-purple); }
+        #progress { font-size: 18px; color: #94a3b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+
+    <section class="slide active">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <div style="display: flex; gap: 30px; font-size: 120px; margin-bottom: 30px;">
+                <i class="fa-brands fa-php" style="color: var(--accent-purple);"></i>
+                <i class="fa-solid fa-database" style="color: var(--accent-blue);"></i>
+            </div>
+            <h1>Creació d'una API REST: <br><span class="php">PHP</span> i <span class="db">MySQL</span></h1>
+            <p style="font-size: 32px; color: #94a3b8; margin-top: 20px; text-align: center;">Mètodes HTTP, format JSON, connexió PDO i Escalabilitat</p>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">1. Punt de partida: Base de Dades i PDO</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>La Taula MySQL</h3>
+                    <p>Per al nostre exemple gestionarem una taula d'usuaris molt senzilla:</p>
+<pre>
+CREATE TABLE usuaris (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE
+);
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Connexió segura (`connexio.php`)</h3>
+                    <p>Utilitzem <strong>PDO</strong> perquè és l'estàndard modern més segur contra injeccions SQL.</p>
+<pre>
+&lt;?php
+$host = 'localhost';
+$db   = 'api_demo';
+$user = 'root';
+$pass = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die(json_encode(["error" => "Connexió fallida"]));
+}
+?&gt;
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">2. Fonaments de l'API</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Capçaleres Obligatòries</h3>
+                    <p>El primer que ha de fer la teva `api.php` és avisar al client que rebrà dades en format JSON.</p>
+<pre>
+&lt;?php
+// Retornem format JSON
+header("Content-Type: application/json; charset=UTF-8");
+
+// Incloem la connexió (atura el procés si falla)
+require_once 'connexio.php';
+?&gt;
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Detectant l'Operació</h3>
+                    <p>Una API REST utilitza el mateix URL, i sap què ha de fer mirant el Mètode HTTP emprat per JS:</p>
+                    <ul class="bullet-list">
+                        <li><span class="tag-get">GET</span> Llegir registres</li>
+                        <li><span class="tag-post">POST</span> Crear registre nou</li>
+                        <li><span class="tag-put">PUT</span> Modificar registre</li>
+                        <li><span class="tag-delete">DELETE</span> Esborrar registre</li>
+                    </ul>
+<pre>
+$method = $_SERVER['REQUEST_METHOD'];
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">3. REST: Col·lecció vs Instància</h2>
+        <div class="content-area">
+            <p>Un dels principis bàsics de REST és distingir si estem demanant <strong>tota la llista</strong> (Col·lecció) o <strong>un sol element</strong> concret (Instància).</p>
+            <div class="two-column">
+                <div class="col">
+                    <h3>Col·lecció</h3>
+                    <p>Es fa cridant a l'arrel de l'API. Afecta o retorna múltiples registres.</p>
+                    <ul class="bullet-list">
+                        <li>Exemple: <code>GET api.php</code></li>
+                        <li>Què fa: Retorna tots els usuaris.</li>
+                        <li>Sortida típica: Un <strong>Array</strong> de JSONs <code>[{...}, {...}]</code></li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>Instància</h3>
+                    <p>Es fa passant un identificador (ID). Afecta només a aquest registre.</p>
+                    <ul class="bullet-list">
+                        <li>Exemple: <code>GET api.php?id=5</code></li>
+                        <li>Què fa: Retorna només l'usuari 5.</li>
+                        <li>Sortida típica: Un únic <strong>Objecte</strong> JSON <code>{...}</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">4. Llegir dades <span class="tag-get" style="font-size: 24px;">GET</span></h2>
+        <div class="content-area">
+            <p>Hem de programar l'API per atendre tant la <strong>Col·lecció</strong> com la <strong>Instància</strong>.</p>
+            <div class="two-column">
+                <div class="col">
+                    <h3>Lògica Backend (PHP)</h3>
+<pre>
+if ($method === 'GET') {
+    if (isset($_GET['id'])) {
+        // INSTÀNCIA: Buscar per ID
+        $stmt = $pdo->prepare("SELECT * FROM usuaris WHERE id=?");
+        $stmt->execute([$_GET['id']]);
+        $usuari = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo json_encode($usuari); // Retorna 1 objecte
+    } else {
+        // COL·LECCIÓ: Retornar tot
+        $stmt = $pdo->query("SELECT * FROM usuaris");
+        $usuaris = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($usuaris); // Retorna un array
+    }
+}
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Peticions Frontend (JS)</h3>
+<pre>
+// 1. Demanar TOTS (Col·lecció)
+fetch('api.php')
+  .then(res => res.json())
+  .then(arrayUsuaris => console.log(arrayUsuaris));
+
+// 2. Demanar UN de sol (Instància)
+fetch('api.php?id=3')
+  .then(res => res.json())
+  .then(unUsuari => console.log(unUsuari.nom));
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">5. Crear registre <span class="tag-post" style="font-size: 24px;">POST</span></h2>
+        <div class="content-area">
+            <p>A l'hora de rebre dades via POST, depèn de com ho envïi el client: com a JSON pur o com un formulari clàssic.</p>
+            <div class="two-column">
+                <div class="col">
+                    <h3>Opció A: Via Formulari HTML/URL-encoded</h3>
+                    <p>Si el client envia un <code>&lt;form&gt;</code> clàssic o un `FormData` en JS, PHP ho rep directament a la superglobal <code>$_POST</code>.</p>
+<pre>
+// PHP: Accés directe
+$nom = $_POST['nom'];
+$email = $_POST['email'];
+
+$sql = "INSERT INTO usuaris (nom, email) VALUES (?, ?)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$nom, $email]);
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Opció B: Via JSON Pur (Estàndard REST)</h3>
+                    <p>Si el client (React, fetch) envia un <code>body: JSON.stringify()</code>, PHP <strong>no</strong> pot usar `$_POST`. Ha de llegir l'input en cru.</p>
+<pre>
+// PHP: Llegir flux i descodificar
+$json = file_get_contents("php://input");
+$data = json_decode($json);
+
+$sql = "INSERT INTO usuaris (nom, email) VALUES (?, ?)";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$data->nom, $data->email]);
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">6. Actualitzar i Esborrar</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Actualitzar <span class="tag-put">PUT</span></h3>
+                    <p>Com a POST JSON, llegim l'entrada. Exigim rebre un ID (Instància) per saber qui actualitzar.</p>
+<pre>
+if ($method === 'PUT') {
+    $data = json_decode(file_get_contents("php://input"));
+    $sql = "UPDATE usuaris SET nom=?, email=? WHERE id=?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$data->nom, $data->email, $data->id]);
+    
+    echo json_encode(["msg" => "Actualitzat"]);
+}
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Esborrar <span class="tag-delete">DELETE</span></h3>
+                    <p>S'ha de rebre l'ID de la Instància per URL (ex: `api.php?id=3`) o via JSON.</p>
+<pre>
+if ($method === 'DELETE') {
+    $data = json_decode(file_get_contents("php://input"));
+    $sql = "DELETE FROM usuaris WHERE id=?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$data->id]);
+    
+    echo json_encode(["msg" => "Esborrat"]);
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">7. Provant la nostra API</h2>
+        <div class="content-area">
+            <div class="info-box" style="margin-bottom: 30px;">
+                <h3>Fitxer de proves inclòs</h3>
+                <p>Juntament amb aquesta presentació tens els fitxers <code>api.php</code> i <code>client.html</code>. Si els poses al teu XAMPP/MAMP, podràs obrir <code>client.html</code> i executar botons que disparen els mètodes GET, POST, PUT i DELETE sense haver de programar res al client.</p>
+            </div>
+            
+            <div class="info-box" style="background: rgba(56, 189, 248, 0.1); border-left: 5px solid var(--accent-blue);">
+                <h3 style="color: var(--accent-blue);">Per als més avançats: Postman</h3>
+                <p>Al món laboral, els desenvolupadors Backend no es construeixen fitxers HTML per provar les APIs. Utilitzen programari especialitzat com <strong>Postman</strong> o <strong>Insomnia</strong> per construir les peticions, simular el format exacte de les dades (Formulari o JSON Raw) i avaluar les respostes.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">8. Avançat: Escalabilitat i Enrutament</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>El problema del fitxer únic</h3>
+                    <p>Tenir tots els `if` en un sol `api.php` és insostenible per a 20 taules. La solució és un fitxer <strong>Enrutador (Router)</strong> central.</p>
+<pre style="font-size: 13px;">
+/projecte
+ ├── config/database.php 
+ ├── index.php           (Router central)
+ └── controllers/
+      ├── usuaris.php    
+      └── productes.php  
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Exemple d'Enrutador (`index.php`)</h3>
+                    <p>L'index rep totes les peticions, analitza la URL i decideix quin arxiu atén la petició.</p>
+<pre>
+&lt;?php
+$request = $_SERVER['REQUEST_URI'];
+// Netegem paràmetres com ?id=1
+$ruta_base = strtok($request, '?');
+
+switch ($ruta_base) {
+    case '/api/usuaris':
+        require 'controllers/usuaris.php';
+        break;
+    case '/api/productes':
+        require 'controllers/productes.php';
+        break;
+    default:
+        http_response_code(404);
+        echo json_encode(["error" => "Endpoint no trobat"]);
+        break;
+}
+?&gt;
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide">
+        <h2 class="slide-title">9. Avançat: API Orientada a Objectes (OOP)</h2>
+        <div class="content-area">
+            <p>En comptes d'escriure el codi de dalt a baix, s'encapsula tota la lògica d'una taula dins d'una <strong>Classe PHP</strong>.</p>
+            <div class="two-column">
+                <div class="col">
+<pre style="font-size: 12px;">
+&lt;?php
+class Usuari {
+    private $conn;
+    private $taula = "usuaris";
+
+    public function __construct($db) {
+        $this->conn = $db;
+    }
+
+    public function llegir() {
+        $query = "SELECT * FROM " . $this->taula;
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+}
+?&gt;
+</pre>
+                </div>
+                <div class="col">
+                    <p>Després, el teu arxiu d'API (el que crida Javascript), queda totalment net:</p>
+<pre style="font-size: 12px;">
+&lt;?php
+require_once 'database.php';
+require_once 'Usuari.php';
+
+$db = (new Database())->connect();
+$usuari = new Usuari($db);
+
+// Si és GET...
+$stmt = $usuari->llegir();
+$resultats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+echo json_encode($resultats);
+?&gt;
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<div id="controls">
+    <button class="ctrl-btn" id="btn-prev">Anterior</button>
+    <div id="progress">1 / 10</div>
+    <button class="ctrl-btn" id="btn-next">Següent</button>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((s, index) => {
+            s.classList.remove('active');
+            if (index === currentSlide) s.classList.add('active');
+        });
+        progress.innerText = `${currentSlide + 1} / ${slides.length}`;
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+</script>
+
+</body>
+</html>

@@ -12,7 +12,7 @@ function get_db_config()
         'host' => ($envHost !== false && $envHost !== '') ? $envHost : 'localhost',
         'port' => ($envPort !== false && ctype_digit((string)$envPort)) ? (int)$envPort : 3306,
         'user' => ($envUser !== false && $envUser !== '') ? $envUser : 'root',
-        'pass' => ($envPass !== false) ? $envPass : '',
+        'pass' => ($envPass !== false) ? $envPass : '2002@Mopa.pe',
         'name' => ($envName !== false && $envName !== '') ? $envName : 'world',
     );
 }

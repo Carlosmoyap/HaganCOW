@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON: Transferència de Dades i Evolució</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* SETUP GLOBAL (Strict 1280x720) */
+        :root {
+            --bg-color: #0f172a;      /* Fons fosc */
+            --text-color: #f8fafc;    
+            --accent-yellow: #facc15; /* JS/JSON Yellow */
+            --accent-purple: #c084fc; /* PHP Purple */
+            --accent-blue: #38bdf8;
+            --box-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; 
+        }
+
+        #deck {
+            position: relative;
+            width: 100%; height: calc(100% - 60px); 
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 40px 80px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Tipografia */
+        h1 { font-size: 65px; text-align: center; margin-bottom: 20px; font-weight: 800; }
+        h1 span.json { color: var(--accent-yellow); }
+        h1 span.php { color: var(--accent-purple); }
+        
+        h2.slide-title {
+            font-size: 42px; margin-bottom: 20px;
+            border-left: 8px solid var(--accent-yellow); padding-left: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        h2.slide-title.php-title { border-left-color: var(--accent-purple); }
+        
+        h3 { font-size: 26px; color: var(--accent-blue); margin-bottom: 12px; margin-top: 10px; }
+        h3.php-sub { color: var(--accent-purple); }
+        
+        p, li { font-size: 20px; line-height: 1.5; margin-bottom: 12px; }
+        
+        /* Layouts */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .two-column { display: flex; gap: 30px; height: 100%; align-items: stretch; }
+        .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        ul.bullet-list { list-style: none; margin-bottom: 15px; }
+        ul.bullet-list li { position: relative; padding-left: 30px; }
+        ul.bullet-list li::before { content: '▹'; color: var(--accent-yellow); font-size: 28px; position: absolute; left: 0; top: -4px; }
+        ul.bullet-list.php-list li::before { color: var(--accent-purple); }
+
+        /* Caixes d'Informació */
+        .info-box {
+            background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569;
+            margin-bottom: 15px;
+        }
+        
+        .modern-box {
+            background: rgba(56, 189, 248, 0.1); border-left: 5px solid var(--accent-blue);
+            padding: 15px; border-radius: 0 8px 8px 0; margin-top: auto;
+        }
+        .modern-box h4 { color: var(--accent-blue); font-size: 20px; margin-bottom: 8px; }
+
+        /* Autoavaluació (Details/Summary) */
+        details.quiz {
+            background: #1e293b; border-left: 5px solid var(--accent-yellow);
+            margin-bottom: 10px; border-radius: 0 8px 8px 0; overflow: hidden;
+        }
+        details.quiz summary {
+            padding: 15px; font-weight: bold; font-size: 20px; cursor: pointer; outline: none;
+            background: rgba(250, 204, 21, 0.1); color: var(--accent-yellow); list-style: none;
+        }
+        details.quiz summary::-webkit-details-marker { display: none; }
+        details.quiz summary::before { content: '❓ '; }
+        details.quiz[open] summary::before { content: '💡 '; }
+        details.quiz .answer { padding: 15px; background: #0f172a; border-top: 1px solid #334155; font-family: 'JetBrains Mono', monospace; color: #a3e635; }
+
+        /* Codi */
+        pre {
+            background-color: #020617; border: 1px solid #334155; border-radius: 8px;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 15px;
+            overflow-x: auto; margin-bottom: 15px; color: #e2e8f0;
+        }
+        code { font-family: 'JetBrains Mono', monospace; color: var(--accent-yellow); }
+        .com { color: #64748b; font-style: italic; } .str { color: #a6e22e; } .fn { color: #61afef; } .tag { color: #e06c75; } .kw { color: #c678dd; }
+
+        /* Laboratoris */
+        .lab-container { display: flex; flex-direction: column; height: 100%; gap: 15px; flex-grow: 1; min-height: 350px; }
+        .lab-editors { display: flex; gap: 20px; height: 200px; flex-shrink: 0; }
+        .lab-pane { flex: 1; display: flex; flex-direction: column; }
+        .lab-label { background: #334155; padding: 8px 15px; font-weight: bold; border-radius: 8px 8px 0 0; font-size: 16px; }
+        .lab-editor {
+            width: 100%; flex-grow: 1; background: #020617; color: #e2e8f0; border: 1px solid #334155;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 14px; resize: none; border-radius: 0 0 8px 8px;
+        }
+        .lab-editor:focus { outline: none; border-color: var(--accent-yellow); }
+        .lab-controls { display: flex; justify-content: flex-end; flex-shrink: 0; }
+        .btn-run { background: var(--accent-yellow); color: #0f172a; border: none; padding: 10px 25px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-run:hover { filter: brightness(1.2); }
+        .lab-output { flex-grow: 1; border: 3px solid #334155; border-radius: 8px; background: #fff; width: 100%; min-height: 150px; }
+
+        /* Barra Inferior */
+        #controls {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #020617; border-top: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+            z-index: 100;
+        }
+        .ctrl-btn { background: transparent; color: var(--text-color); border: 1px solid #334155; padding: 8px 20px; font-size: 18px; border-radius: 6px; cursor: pointer; font-family: 'Outfit'; }
+        .ctrl-btn:hover { background: #1e293b; color: var(--accent-yellow); }
+        #progress { font-size: 18px; color: #94a3b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+
+    <!-- SLIDE 1: Títol -->
+    <section class="slide active">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <div style="display: flex; gap: 30px; font-size: 120px; margin-bottom: 30px;">
+                <i class="fa-solid fa-code" style="color: var(--accent-yellow);"></i>
+                <i class="fa-brands fa-php" style="color: var(--accent-purple);"></i>
+            </div>
+            <h1>Transferència de Dades: <span class="json">JSON</span></h1>
+            <p style="font-size: 32px; color: #94a3b8; margin-top: 20px; text-align: center;">Orígens, Estructura, i Integració amb AJAX i PHP</p>
+            <p style="margin-top: 50px; color: var(--text-color); font-size: 20px; background: #1e293b; padding: 10px 20px; border-radius: 20px;"><i class="fa-solid fa-keyboard"></i> Utilitza les fletxes per navegar</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Història i Anècdotes (NOVA) -->
+    <section class="slide">
+        <h2 class="slide-title">1. Història i Curiositats</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>L'era de l'XML (1998)</h3>
+                    <p><strong>Creador:</strong> Desenvolupat pel W3C (Consorci de la World Wide Web).</p>
+                    <p><strong>Finalitat inicial:</strong> Simplificar l'SGML per crear un format universal capaç d'estructurar documents i dades complexes a la primera web moderna.</p>
+                    <div class="modern-box" style="border-left-color: #f87171; background: rgba(248, 113, 113, 0.1);">
+                        <h4 style="color: #f87171;"><i class="fa-solid fa-book-journal-whills"></i> El somni trencat de l'XHTML</h4>
+                        <p style="font-size: 16px;">A principis dels 2000, l'XML es veia com el futur absolut de la web. L'estàndard dictava que era <strong>implacablement estricte</strong>: si t'oblidaves de tancar una sola etiqueta en tot un document, la pàgina fallava completament mostrant un error groc i no es renderitzava res. Aquesta rigidesa va acabar esgotant als desenvolupadors de front-end.</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3>La rebel·lió del JSON (2001)</h3>
+                    <p><strong>Creador:</strong> Douglas Crockford (popularitzador).</p>
+                    <p><strong>Finalitat inicial:</strong> Passar dades del servidor al navegador de forma asíncrona sense plugins (com Flash o Java) i fugint de la verbositat i complexitat de l'XML.</p>
+                    <div class="modern-box" style="border-left-color: var(--accent-yellow); background: rgba(250, 204, 21, 0.1);">
+                        <h4 style="color: var(--accent-yellow);"><i class="fa-solid fa-lightbulb"></i> Una "descoberta", no un invent</h4>
+                        <p style="font-size: 16px;">Crockford sempre insisteix que ell no va inventar el JSON, sinó que el va <strong>"descobrir"</strong>, ja que era exactament la mateixa sintaxi que ja utilitzava JavaScript. <br><br><strong>Curiositat:</strong> La primera especificació permetia comentaris, però Crockford els va eliminar perquè els desenvolupadors els utilitzaven per afegir directives ocultes, trencant la regla de ser un format de dades "pur i simple".</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Objectius i XML vs JSON -->
+    <section class="slide">
+        <h2 class="slide-title">2. Objectius i XML vs JSON</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Per què necessitem JSON o XML?</h3>
+                    <ul class="bullet-list">
+                        <li>Necessitem una estructura per crear missatges complexos utilitzant separadors.</li>
+                        <li>Necessitem una sintaxi per agrupar informació associada (noms i valors).</li>
+                        <li>Volem una sintaxi general per definir jerarquies (dades aniuades i llistes).</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>La Batalla dels Formats</h3>
+                    <p>XML i JSON van ser les dues grans solucions al mateix problema:</p>
+                    <ul class="bullet-list">
+                        <li><strong>XML:</strong> Hi ha moltes eines empresarials antigues per gestionar aquest tipus de dades. És molt verbós perquè requereix etiquetes de tancament (ex: <code>&lt;nom&gt;Anna&lt;/nom&gt;</code>).</li>
+                        <li><strong>JSON:</strong> Té una sintaxi molt més natural, és més compacte ("fat-free", sense greix), més fàcil d'escriure i s'integra de forma nativa amb els llenguatges moderns.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Evolució d'un Missatge -->
+    <section class="slide">
+        <h2 class="slide-title">3. L'Evolució d'un Missatge</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>De Text Pla a XML</h3>
+                    <p>Imaginem que volem transmetre aquest missatge de correu:</p>
+<pre style="font-size: 13px;">
+BEGIN
+FROM: Alice Smith (alice@example.com)
+TO: Robert Jones (roberto@example.com)
+SUBJECT: Tomorrow's "Birthday Bash" event!
+MESSAGE (english): Hey Bob, Don't forget!
+PRIVATE: true
+END
+</pre>
+                    <p>La seva versió en <strong>XML</strong> seria (nota com ocupa més espai):</p>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;?xml</span> <span class="prop">version</span>=<span class="str">"1.0"</span><span class="tag">?&gt;</span>
+<span class="tag">&lt;note</span> <span class="prop">private</span>=<span class="str">"true"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;from&gt;</span>Alice Smith<span class="tag">&lt;/from&gt;</span>
+  <span class="tag">&lt;to&gt;</span>Robert Jones<span class="tag">&lt;/to&gt;</span>
+  <span class="tag">&lt;subject&gt;</span>Tomorrow's "Birthday Bash"<span class="tag">&lt;/subject&gt;</span>
+  <span class="tag">&lt;message</span> <span class="prop">lang</span>=<span class="str">"en"</span><span class="tag">&gt;</span>Hey Bob, Don't forget!<span class="tag">&lt;/message&gt;</span>
+<span class="tag">&lt;/note&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3>La versió JSON</h3>
+                    <p>JSON mapeja el mateix en Objectes i Arrays molt més nets.</p>
+<pre style="font-size: 14px;">
+{
+  <span class="str">"private"</span>: <span class="kw">true</span>,
+  <span class="str">"from"</span>: <span class="str">"Alice Smith"</span>,
+  <span class="str">"to"</span>: [
+    <span class="str">"Robert Jones"</span>,
+    <span class="str">"Charles Dodd"</span>
+  ],
+  <span class="str">"subject"</span>: <span class="str">"Tomorrow's \"Birthday Bash\""</span>,
+  <span class="str">"message"</span>: {
+    <span class="str">"language"</span>: <span class="str">"english"</span>,
+    <span class="str">"text"</span>: <span class="str">"Hey Bob, Don't forget!"</span>
+  }
+}
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: Sintaxi JSON -->
+    <section class="slide">
+        <h2 class="slide-title">4. Estructura i Sintaxi JSON</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Similituds i Diferències</h3>
+                    <ul class="bullet-list">
+                        <li>Igual que l'XML, és text pla, <em>self-describing</em> (fàcil de llegir per humans) i té jerarquies.</li>
+                        <li>A diferència de l'XML, <strong>no té etiqueta de finalització</strong>, és més compacte i permet l'ús nadiu de matrius (Arrays).</li>
+                        <li>No té paraules reservades.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3>Regles de l'Estructura</h3>
+                    <div class="info-box">
+                        <p><strong>Objecte <code>{ }</code></strong><br>
+                        Col·lecció de Noms/Valors. Comença amb <code>{</code> i acaba amb <code>}</code>. El nom va seguit de <code>:</code> i els parells se separen per comes.</p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>Array <code>[ ]</code></strong><br>
+                        Llista de valors ordenats. Comença amb <code>[</code> i acaba amb <code>]</code>.</p>
+                    </div>
+                    <div class="info-box">
+                        <p><strong>Valors Admesos</strong><br>
+                        String (sempre amb cometes dobles <code>""</code>), Número, Booleà (<code>true</code>/<code>false</code>), <code>null</code>, Objecte o un altre Array.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: Quiz -->
+    <section class="slide">
+        <h2 class="slide-title">5. Autoavaluació: Accedint a les dades</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <p>Observa el següent JSON emmagatzemat a la variable <code>data</code>:</p>
+<pre style="font-size: 14px; height: 100%;">
+<span class="kw">var</span> data = {
+  <span class="str">"window"</span>: {
+    <span class="str">"title"</span>: <span class="str">"Sample Widget"</span>,
+    <span class="str">"width"</span>: <span class="val">500</span>, <span class="str">"height"</span>: <span class="val">500</span>
+  },
+  <span class="str">"image"</span>: {
+    <span class="str">"src"</span>: <span class="str">"images/logo.png"</span>,
+    <span class="str">"coords"</span>: [<span class="val">250</span>, <span class="val">150</span>, <span class="val">350</span>, <span class="val">400</span>]
+  },
+  <span class="str">"messages"</span>: [
+    {<span class="str">"text"</span>: <span class="str">"Save"</span>, <span class="str">"offset"</span>: [<span class="val">10</span>, <span class="val">30</span>]},
+    {<span class="str">"text"</span>: <span class="str">"Quit"</span>, <span class="str">"offset"</span>: [<span class="val">30</span>, <span class="val">10</span>]}
+  ]
+};
+</pre>
+                </div>
+                <div class="col">
+                    <p>Com accediries als següents valors amb JavaScript? <em>(Clica per revelar la solució)</em></p>
+                    
+                    <details class="quiz">
+                        <summary>El títol de la finestra?</summary>
+                        <div class="answer">data.window.title;</div>
+                    </details>
+                    
+                    <details class="quiz">
+                        <summary>La tercera coordenada de la imatge?</summary>
+                        <div class="answer">data.image.coords[2];</div>
+                    </details>
+
+                    <details class="quiz">
+                        <summary>El número de missatges?</summary>
+                        <div class="answer">data.messages.length;</div>
+                    </details>
+
+                    <details class="quiz">
+                        <summary>El y-offset de l'últim missatge?</summary>
+                        <div class="answer">
+// 'offset' és array. Index 1 = Y.<br>
+var len = data.messages.length;<br>
+data.messages[len - 1].offset[1];
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: Mètodes JS i el perill de l'eval -->
+    <section class="slide">
+        <h2 class="slide-title">6. Mètodes JS i el perill d'<code>eval()</code></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>El passat fosc: <code>eval()</code></h3>
+                    <p>Als inicis, com que JSON és sintaxi pura de JS, es feia servir el mètode <code>eval()</code> per convertir el text en objecte:</p>
+<pre>
+<span class="kw">var</span> myObj = <span class="fn">eval</span>(<span class="str">'('</span> + myJSONtext + <span class="str">')'</span>);
+</pre>
+                    <div class="tree-bad" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="margin:0 0 10px 0;"><i class="fa-solid fa-triangle-exclamation"></i> ATENCIÓ! Risc de Seguretat</h4>
+                        <p style="margin:0; font-size: 16px;">La funció <code>eval()</code> executarà QUALSEVOL programa JavaScript inserit al text. Si el JSON ve d'un usuari maliciós, et pot hackejar la pàgina (XSS). <strong>Avui dia NO s'ha d'usar MAI per a JSON.</strong></p>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3>La Solució Nadiua i Segura</h3>
+                    <p>Els navegadors moderns incorporen l'objecte global <code>JSON</code>.</p>
+                    
+                    <ul class="bullet-list">
+                        <li><strong><code>JSON.parse(string)</code></strong><br>
+                        Converteix una cadena de text JSON en un objecte segur de JavaScript. (Només parseja dades, no executa codi).</li>
+                        <li style="margin-top: 15px;"><strong><code>JSON.stringify(object)</code></strong><br>
+                        Fa l'invers: converteix un objecte JS en una cadena de text JSON per poder-lo enviar a un servidor.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: Exemples Pràctics JS -->
+    <section class="slide">
+        <h2 class="slide-title">7. Exemples de Descodificació (Parse)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>Exemple clàssic W3Schools</h3>
+<pre>
+<span class="kw">var</span> txt = <span class="str">'{"name":"John", "age":33}'</span>;
+
+<span class="com">// De text a Objecte JS</span>
+<span class="kw">var</span> obj = JSON.<span class="fn">parse</span>(txt);
+
+<span class="com">// Integració DOM Clàssica</span>
+document.<span class="fn">getElementById</span>(<span class="str">"jname"</span>).innerHTML = obj.name;
+</pre>
+                </div>
+                <div class="col">
+                    <h3>Iterant matrius amb JS Modern</h3>
+                    <p>Tradicionalment s'utilitzava jQuery <code>$.each()</code>. Avui fem servir el mètode natiu <code>forEach</code>.</p>
+<pre>
+<span class="kw">var</span> jsonString = <span class="str">'[{"name":"GTUG"}, {"name":"Hybrid"}]'</span>;
+<span class="kw">var</span> myData = JSON.<span class="fn">parse</span>(jsonString);
+
+<span class="kw">var</span> llista = document.<span class="fn">getElementById</span>(<span class="str">'groups'</span>);
+
+<span class="com">// JS Natiu en lloc de jQuery</span>
+myData.<span class="fn">forEach</span>( grup =&gt; {
+  <span class="kw">var</span> li = document.<span class="fn">createElement</span>(<span class="str">'li'</span>);
+  li.textContent = grup.name;
+  llista.<span class="fn">appendChild</span>(li);
+});
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: AJAX i JSON -->
+    <section class="slide">
+        <h2 class="slide-title">8. AJAX + JSON</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3>L'Enfocament Històric (XHR)</h3>
+                    <p>Així es recuperava el fitxer <code>data.json</code> abans.</p>
+<pre>
+<span class="kw">var</span> xhr = <span class="kw">new</span> <span class="fn">XMLHttpRequest</span>();
+
+xhr.onreadystatechange = <span class="kw">function</span>() {
+  <span class="kw">if</span> (<span class="kw">this</span>.readyState == <span class="val">4</span> && <span class="kw">this</span>.status == <span class="val">200</span>) {
+    <span class="com">// Havíem de parsejar el text manualment</span>
+    <span class="kw">var</span> obj = JSON.<span class="fn">parse</span>(<span class="kw">this</span>.responseText);
+    alert(obj.name);
+  }
+};
+xhr.<span class="fn">open</span>(<span class="str">"GET"</span>, <span class="str">"data.json"</span>, <span class="kw">true</span>);
+xhr.<span class="fn">send</span>();
+</pre>
+                </div>
+                <div class="col">
+                    <h3>L'Estàndard Actual (Fetch API)</h3>
+                    <p>L'API <code>fetch()</code> està dissenyada amb el JSON al cap, integrant la conversió automàtica gràcies a les promeses (<code>.json()</code>).</p>
+<pre>
+<span class="fn">fetch</span>(<span class="str">'data.json'</span>)
+  <span class="com">// Retorna l'objecte JS directament!</span>
+  .<span class="fn">then</span>(response =&gt; response.<span class="fn">json</span>()) 
+  
+  .<span class="fn">then</span>(obj =&gt; {
+    console.<span class="fn">log</span>(<span class="str">"Nom: "</span> + obj.name);
+    console.<span class="fn">log</span>(<span class="str">"País: "</span> + obj.country);
+  })
+  
+  .<span class="fn">catch</span>(err =&gt; console.<span class="fn">error</span>(<span class="str">"Error!"</span>, err));
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: LAB JSON FETCH -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 1: Cridant una API amb Fetch i JSON <i class="fa-solid fa-laptop-code" style="color: var(--accent-yellow);"></i></h2>
+        <div class="content-area">
+            <p style="margin-bottom: 10px; font-size: 18px;">Aquest codi contacta amb un servidor real i descarrega un JSON amb dades d'usuaris ficticis.</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label">HTML de destinació</div>
+                        <textarea class="lab-editor" id="html-1" spellcheck="false" style="color:#e2e8f0;">
+<h3>Llistat d'Usuaris</h3>
+<ul id="llista-usuaris" style="color: #333; background: #eee; padding: 15px; border-radius: 8px;">
+  <!-- Es farà l'append aquí -->
+</ul>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#ca8a04;">JavaScript Modern (Fetch + JSON)</div>
+                        <textarea class="lab-editor" id="js-1" spellcheck="false" style="color:#fde047;">
+// Cridem un API de prova que retorna un Array JSON
+fetch('https://jsonplaceholder.typicode.com/users?_limit=3')
+  .then(res => res.json()) // Ho parseja automàticament
+  .then(usuaris => {
+     const ul = document.getElementById('llista-usuaris');
+     ul.innerHTML = ''; // Netegem
+     
+     usuaris.forEach(user => {
+         ul.innerHTML += `<li>${user.name} (${user.email})</li>`;
+     });
+  });
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(1)"><i class="fa-solid fa-play"></i> Descarregar JSON</button>
+                </div>
+                <iframe id="out-1" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: JSON i PHP -->
+    <section class="slide">
+        <h2 class="slide-title php-title">9. JSON al Servidor: PHP <i class="fa-brands fa-php" style="color: var(--accent-purple);"></i></h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="php-sub">Funcions Globals</h3>
+                    <p>Així com JS té `JSON.stringify` i `JSON.parse`, PHP inclou dues funcions clau globals natives per fer el pont entre codi i transferència.</p>
+                    
+                    <ul class="bullet-list php-list">
+                        <li><strong><code>json_encode(object/array)</code></strong><br>Codifica una matriu o objecte de PHP i retorna un String en format JSON llest per enviar.</li>
+                        <li style="margin-top: 15px;"><strong><code>json_decode(string, assoc)</code></strong><br>Agafa l'String JSON entrant i el converteix en variables de PHP. Si <code>assoc</code> és <code>true</code>, ho converteix en un array associatiu en comptes d'un objecte.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="php-sub">Exemple <code>json_encode()</code></h3>
+<pre>
+<span class="tag">&lt;?php</span>
+<span class="kw">$arr</span> = <span class="kw">array</span>(
+  <span class="str">'a'</span> =&gt; <span class="val">1</span>, 
+  <span class="str">'b'</span> =&gt; <span class="val">2</span>, 
+  <span class="str">'c'</span> =&gt; <span class="val">3</span>
+);
+
+<span class="com">// Ho imprimim per pantalla cap al client</span>
+<span class="kw">echo</span> <span class="fn">json_encode</span>(<span class="kw">$arr</span>);
+<span class="tag">?&gt;</span>
+</pre>
+                    <div class="info-box">
+                        <strong>Produeix el text exacte:</strong><br>
+                        <code style="color: #a3e635;">{"a":1,"b":2,"c":3}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: PHP Avançat -->
+    <section class="slide">
+        <h2 class="slide-title php-title">10. Exemples Avançats a PHP</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="php-sub">Codificant Arrays Multidimensionals</h3>
+                    <p>Com l'exemple clàssic de la llibreria Odegaard:</p>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;?php</span>
+<span class="kw">$data</span> = <span class="kw">array</span>(
+  <span class="str">"library"</span> =&gt; <span class="str">"Odegaard"</span>,
+  <span class="str">"category"</span> =&gt; <span class="str">"fantasy"</span>,
+  <span class="str">"books"</span> =&gt; <span class="kw">array</span>(
+    <span class="kw">array</span>(<span class="str">"title"</span>=&gt;<span class="str">"Harry Potter"</span>, <span class="str">"author"</span>=&gt;<span class="str">"Rowling"</span>),
+    <span class="kw">array</span>(<span class="str">"title"</span>=&gt;<span class="str">"The Hobbit"</span>, <span class="str">"author"</span>=&gt;<span class="str">"Tolkien"</span>)
+  )
+);
+<span class="kw">print</span> <span class="fn">json_encode</span>(<span class="kw">$data</span>);
+<span class="tag">?&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="php-sub">Codificant Classes i Objectes</h3>
+                    <p>Si tens una classe `Emp`, <code>json_encode</code> tradueix les propietats <code>public</code> automàticament.</p>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;?php</span>
+<span class="kw">class</span> Emp {
+  <span class="kw">public</span> <span class="kw">$name</span> = <span class="str">""</span>;
+  <span class="kw">public</span> <span class="kw">$hobbies</span> = <span class="str">""</span>;
+  <span class="kw">public</span> <span class="kw">$birthdate</span> = <span class="str">""</span>;
+}
+
+<span class="kw">$e</span> = <span class="kw">new</span> Emp();
+<span class="kw">$e</span>-&gt;name = <span class="str">"sachin"</span>;
+<span class="kw">$e</span>-&gt;hobbies = <span class="str">"sports"</span>;
+<span class="kw">$e</span>-&gt;birthdate = <span class="fn">date</span>(<span class="str">'m/d/Y'</span>, <span class="fn">strtotime</span>(<span class="str">"8/5/1974"</span>));
+
+<span class="kw">echo</span> <span class="fn">json_encode</span>(<span class="kw">$e</span>);
+<span class="tag">?&gt;</span>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 13: Quiz PHP -->
+    <section class="slide">
+        <h2 class="slide-title php-title">11. Descodificació PHP (<code>json_decode</code>)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <p>La funció <code>var_dump()</code> permet visualitzar el contingut intern, tipus i valors d'una estructura PHP.</p>
+<pre>
+<span class="tag">&lt;?php</span>
+<span class="kw">$json</span> = <span class="str">'{"a":1,"b":2,"c":3}'</span>;
+
+<span class="com">// Decodifica com a Objecte PHP genèric (stdClass)</span>
+<span class="fn">var_dump</span>(<span class="fn">json_decode</span>(<span class="kw">$json</span>));
+
+<span class="com">// Decodifica com a Array Associatiu PHP</span>
+<span class="fn">var_dump</span>(<span class="fn">json_decode</span>(<span class="kw">$json</span>, <span class="kw">true</span>));
+<span class="tag">?&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <p>Quin resultat visualitza per pantalla l'últim <code>var_dump()</code> amb l'opció <code>true</code> aplicada?</p>
+                    
+                    <details class="quiz">
+                        <summary>Veure el resultat esperat</summary>
+                        <div class="answer">
+array(3) {<br>
+&nbsp;&nbsp;["a"]=> int(1)<br>
+&nbsp;&nbsp;["b"]=> int(2)<br>
+&nbsp;&nbsp;["c"]=> int(3)<br>
+}
+                        </div>
+                    </details>
+                    
+                    <div class="info-box" style="margin-top: 20px;">
+                        <h4 style="color:var(--text-color);"><i class="fa-solid fa-circle-info"></i> La importància del 'true'</h4>
+                        <p style="font-size: 16px; margin:0;">És molt comú en PHP forçar el 2n paràmetre a <code>true</code> perquè a PHP li costa menys treballar nativament amb Arrays Associatius (<code>$dades['a']</code>) que no pas amb Objectes Genèrics (<code>$dades->a</code>).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Controls Navegació -->
+<div id="controls">
+    <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+    <div id="progress">Diapositiva 1 / 13</div>
+    <button class="ctrl-btn" id="btn-next">Següent <i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Lògica Presentació -->
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((s, index) => {
+            s.classList.remove('active');
+            if (index === currentSlide) s.classList.add('active');
+        });
+        progress.innerText = `Diapositiva ${currentSlide + 1} / ${slides.length}`;
+        
+        // Auto-run labs (Lab està a la slide d'índex 9 ara)
+        if(currentSlide === 9) runLabIfEmpty(1);
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+
+    // Control per teclat
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentSlide > 0) { currentSlide--; updateSlides(); }
+        }
+    });
+
+    // Sistema de Laboratoris interactius
+    function runLab(id) {
+        const htmlInput = document.getElementById('html-' + id);
+        const jsInput = document.getElementById('js-' + id);
+        
+        const html = htmlInput ? htmlInput.value : '';
+        const js = jsInput ? jsInput.value : '';
+        const iframe = document.getElementById('out-' + id);
+        
+        const encodedJs = encodeURIComponent(js);
+        const sOpen = "<script";
+        const sClose = "</" + "script>";
+        
+        const content = `
+            <!DOCTYPE html>
+            <html lang="ca">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #1e293b; background: #f8fafc; margin:0; }
+                </style>
+            </head>
+            <body>
+                ${html}
+                ${sOpen}>
+                    window.onload = function() {
+                        try {
+                            const rawJs = decodeURIComponent("${encodedJs}");
+                            if (rawJs.trim().length > 0) {
+                                const executeCode = new Function(rawJs);
+                                executeCode();
+                            }
+                        } catch(e) {
+                            document.body.innerHTML += '<div style="color:red; margin-top:10px; padding:10px; border:1px solid #fca5a5; background:#fee2e2; border-radius:4px;"><b>Error JS:</b> ' + e.message + '</div>';
+                        }
+                    };
+                ${sClose}
+            </body>
+            </html>
+        `;
+        
+        iframe.srcdoc = content;
+    }
+
+    function runLabIfEmpty(id) {
+        const iframe = document.getElementById('out-' + id);
+        if (!iframe.srcdoc || iframe.srcdoc === "") {
+            runLab(id);
+        }
+    }
+
+    updateSlides();
+</script>
+
+</body>
+</html>

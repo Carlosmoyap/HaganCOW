@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Proves Client API REST</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        button { padding: 10px 15px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; }
+        .btn-get { background: #38bdf8; }
+        .btn-post { background: #4ade80; }
+        .btn-put { background: #facc15; color: black; }
+        .btn-delete { background: #f87171; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        #consola { background: #1e293b; color: #a3e635; font-family: monospace; padding: 15px; border-radius: 8px; min-height: 100px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h1>Proves API REST Usuaris (Mini-Postman)</h1>
+    
+    <div class="panel">
+        <h3>Llegir Tots (GET)</h3>
+        <button class="btn-get" onclick="ferGET()">Rebre dades (GET)</button>
+    </div>
+
+    <div class="panel">
+        <h3>Crear Usuari (POST)</h3>
+        <input type="text" id="post-nom" placeholder="Nom de l'usuari">
+        <input type="email" id="post-email" placeholder="Correu electrònic">
+        <button class="btn-post" onclick="ferPOST()">Crear (POST)</button>
+    </div>
+
+    <div class="panel">
+        <h3>Actualitzar Usuari (PUT)</h3>
+        <input type="number" id="put-id" placeholder="ID a modificar" style="width: 100px;">
+        <input type="text" id="put-nom" placeholder="Nou Nom">
+        <input type="email" id="put-email" placeholder="Nou Correu">
+        <button class="btn-put" onclick="ferPUT()">Actualitzar (PUT)</button>
+    </div>
+
+    <div class="panel">
+        <h3>Esborrar Usuari (DELETE)</h3>
+        <input type="number" id="del-id" placeholder="ID a esborrar" style="width: 100px;">
+        <button class="btn-delete" onclick="ferDELETE()">Esborrar (DELETE)</button>
+    </div>
+
+    <h3>Resposta del Servidor (JSON):</h3>
+    <div id="consola">Esperant accions...</div>
+
+    <script>
+        const API_URL = 'api.php';
+        const consola = document.getElementById('consola');
+
+        function mostrarLog(data) {
+            consola.innerText = JSON.stringify(data, null, 2);
+        }
+
+        function ferGET() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(data => mostrarLog(data))
+                .catch(err => mostrarLog({error: "No es pot connectar a l'API"}));
+        }
+
+        function ferPOST() {
+            const nom = document.getElementById('post-nom').value;
+            const email = document.getElementById('post-email').value;
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nom: nom, email: email })
+            }).then(res => res.json()).then(data => { mostrarLog(data); ferGET(); });
+        }
+
+        function ferPUT() {
+            const id = document.getElementById('put-id').value;
+            const nom = document.getElementById('put-nom').value;
+            const email = document.getElementById('put-email').value;
+            fetch(API_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id, nom: nom, email: email })
+            }).then(res => res.json()).then(data => { mostrarLog(data); ferGET(); });
+        }
+
+        function ferDELETE() {
+            const id = document.getElementById('del-id').value;
+            fetch(API_URL, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            }).then(res => res.json()).then(data => { mostrarLog(data); ferGET(); });
+        }
+    </script>
+</body>
+</html>

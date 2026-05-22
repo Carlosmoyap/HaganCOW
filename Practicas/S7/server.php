@@ -12,24 +12,6 @@ function handle_ajax_request()
     header('Content-Type: application/json; charset=utf-8');
 
     $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
-    
-    // Nou endpoint per la Sessió 7: Retornar dades en pur format JSON
-    if ($action === 'get_hotels') {
-        echo json_encode(build_hotels_payload());
-        return;
-    }
-
-    if ($action === 'get_users') {
-        // b. Codificar oportunament en un JSON les dades obtingudes de la consulta SQL.
-        $users = load_users_data_json();
-        echo json_encode(array(
-            'ok' => true, 
-            'message' => 'Dades de múltiples columnes (usuaris) obtingudes correctament',
-            'users' => $users
-        ));
-        return;
-    }
-
     if ($action === 'autocomplete') {
         echo json_encode(build_autocomplete_payload());
         return;
@@ -89,18 +71,6 @@ function build_autocomplete_payload()
     }
 
     return array('ok' => true, 'items' => $items);
-}
-
-function build_hotels_payload()
-{
-    // Càrrega i estructuració de dades específicament per a la Sessió 7 (Protocol JSON)
-    list($cities, $hotels) = load_client_page_data();
-    return array(
-        'ok' => true,
-        'message' => 'Dades descarregades correctament des del Servidor utilitzant format JSON',
-        'timestamp' => date('Y-m-d H:i:s'),
-        'hotels' => $hotels
-    );
 }
 
 function build_reservation_ajax_payload($result)
