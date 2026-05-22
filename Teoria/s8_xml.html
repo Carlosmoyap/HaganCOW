@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masterclass: Transferència de dades amb XML</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* CSS per a la presentació */
+        :root {
+            --bg-color: #0f172a;      /* Fons fosc */
+            --text-color: #f8fafc;    /* Text clar */
+            --accent-orange: #f97316; /* Taronja per XML */
+            --accent-blue: #38bdf8;   /* Blau per JS */
+            --accent-purple: #c084fc; /* Lila per PHP */
+            --box-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; 
+        }
+
+        #deck {
+            position: relative;
+            width: 100%; height: calc(100% - 60px); 
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            padding: 30px 60px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .slide.active { opacity: 1; visibility: visible; z-index: 10; }
+
+        /* Tipografia */
+        h1 { font-size: 65px; text-align: center; margin-bottom: 20px; font-weight: 800; }
+        h1 span.xml { color: var(--accent-orange); }
+        
+        h2.slide-title {
+            font-size: 40px; margin-bottom: 20px;
+            border-left: 8px solid var(--accent-orange); padding-left: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        h3 { font-size: 26px; color: var(--accent-blue); margin-bottom: 12px; margin-top: 10px; }
+        h3.php-sub { color: var(--accent-purple); }
+        h3.xml-sub { color: var(--accent-orange); }
+        
+        p, li { font-size: 20px; line-height: 1.5; margin-bottom: 12px; }
+        
+        /* Layouts */
+        .content-area { flex-grow: 1; display: flex; flex-direction: column; height: 100%; }
+        .two-column { display: flex; gap: 30px; height: 100%; align-items: stretch; }
+        .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        ul.bullet-list { list-style: none; margin-bottom: 15px; }
+        ul.bullet-list li { position: relative; padding-left: 30px; }
+        ul.bullet-list li::before { content: '▹'; color: var(--accent-orange); font-size: 28px; position: absolute; left: 0; top: -4px; }
+
+        /* Caixes d'Informació */
+        .info-box {
+            background: var(--box-bg); padding: 20px; border-radius: 8px; border: 1px solid #475569;
+            margin-bottom: 15px;
+        }
+        
+        .modern-box {
+            background: rgba(56, 189, 248, 0.1); border-left: 5px solid var(--accent-blue);
+            padding: 15px; border-radius: 0 8px 8px 0; margin-top: auto; margin-bottom: 15px;
+        }
+        .modern-box h4 { color: var(--accent-blue); font-size: 20px; margin-bottom: 8px; }
+
+        /* Arbre DOM */
+        .tree-box {
+            background: var(--box-bg); padding: 15px; border-radius: 8px; border: 1px solid #475569;
+            font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #94a3b8; margin-bottom: 15px;
+        }
+        .tree-tag { color: var(--accent-orange); font-weight: bold; }
+        .tree-prop { color: var(--accent-blue); font-size: 14px; }
+        .tree-txt { color: #a3e635; }
+
+        /* Codi */
+        pre {
+            background-color: #020617; border: 1px solid #334155; border-radius: 8px;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+            overflow-x: auto; margin-bottom: 15px; color: #e2e8f0;
+        }
+        code { font-family: 'JetBrains Mono', monospace; color: var(--accent-orange); }
+        .com { color: #64748b; font-style: italic; } .str { color: #a6e22e; } .fn { color: #61afef; } .tag { color: #e06c75; } .kw { color: #c678dd; } .attr { color: #d19a66; }
+
+        /* Autoavaluació */
+        details.quiz {
+            background: #1e293b; border-left: 5px solid var(--accent-orange);
+            margin-bottom: 10px; border-radius: 0 8px 8px 0; overflow: hidden;
+        }
+        details.quiz summary {
+            padding: 15px; font-weight: bold; font-size: 20px; cursor: pointer; outline: none;
+            background: rgba(249, 115, 22, 0.1); color: var(--accent-orange); list-style: none;
+        }
+        details.quiz summary::-webkit-details-marker { display: none; }
+        details.quiz summary::before { content: '❓ '; }
+        details.quiz[open] summary::before { content: '💡 '; }
+        details.quiz .answer { padding: 15px; background: #0f172a; border-top: 1px solid #334155; color: #f8fafc; }
+
+        /* Laboratoris */
+        .lab-container { display: flex; flex-direction: column; height: 100%; gap: 15px; flex-grow: 1; min-height: 350px; }
+        .lab-editors { display: flex; gap: 20px; height: 250px; flex-shrink: 0; }
+        .lab-pane { flex: 1; display: flex; flex-direction: column; }
+        .lab-label { background: #334155; padding: 8px 15px; font-weight: bold; border-radius: 8px 8px 0 0; font-size: 16px; }
+        .lab-editor {
+            width: 100%; flex-grow: 1; background: #020617; color: #e2e8f0; border: 1px solid #334155;
+            padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 14px; resize: none; border-radius: 0 0 8px 8px;
+        }
+        .lab-editor:focus { outline: none; border-color: var(--accent-orange); }
+        .lab-controls { display: flex; justify-content: flex-end; flex-shrink: 0; }
+        .btn-run { background: var(--accent-orange); color: #fff; border: none; padding: 10px 25px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-run:hover { filter: brightness(1.2); }
+        .lab-output { flex-grow: 1; border: 3px solid #334155; border-radius: 8px; background: #fff; width: 100%; min-height: 150px; color:#000; padding:10px; overflow-y:auto; }
+
+        /* Barra Inferior */
+        #controls {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #020617; border-top: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 30px;
+            z-index: 100;
+        }
+        .ctrl-btn { background: transparent; color: var(--text-color); border: 1px solid #334155; padding: 8px 20px; font-size: 18px; border-radius: 6px; cursor: pointer; font-family: 'Outfit'; }
+        .ctrl-btn:hover { background: #1e293b; color: var(--accent-orange); }
+        #progress { font-size: 18px; color: #94a3b8; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+
+    <!-- SLIDE 1: Títol -->
+    <section class="slide active">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;">
+            <div style="display: flex; gap: 30px; font-size: 130px; margin-bottom: 30px; color: var(--accent-orange);">
+                <i class="fa-solid fa-file-code"></i>
+            </div>
+            <h1>Transferència de Dades: <span class="xml">XML</span></h1>
+            <p style="font-size: 32px; color: #94a3b8; margin-top: 20px; text-align: center;">Estructures, Parseig DOM, Integració amb AJAX i PHP</p>
+            <p style="margin-top: 50px; color: var(--text-color); font-size: 20px; background: #1e293b; padding: 10px 20px; border-radius: 20px;"><i class="fa-solid fa-keyboard"></i> Utilitza les fletxes per navegar</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Què és XML? -->
+    <section class="slide">
+        <h2 class="slide-title">1. Què és XML?</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">Definició</h3>
+                    <ul class="bullet-list">
+                        <li><strong>XML</strong> significa <em>EXtensible Markup Language</em>.</li>
+                        <li>És un esquelet per crear llenguatges amb delimitadors.</li>
+                        <li>L'HTML ha estat creat per <strong>visualitzar</strong> dades; l'XML ha estat creat per <strong>transportar i emmagatzemar</strong> dades.</li>
+                        <li>La sintaxi és molt semblant a l'HTML:<br>
+                            <code>&lt;element attribute="value"&gt;content&lt;/element&gt;</code>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Característiques Clau</h3>
+                    <ul class="bullet-list">
+                        <li>Els tags (etiquetes) de l'XML <strong>no són predefinits</strong>. Es poden inventar tags relacionats amb l'aplicació.</li>
+                        <li>Permet definir objectes aniuats (jerarquies).</li>
+                        <li>Permet representar estructures de dades complexes en una forma fàcil de llegir i "autodescriptiva".</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Qui usa XML i Quan? -->
+    <section class="slide">
+        <h2 class="slide-title">2. Aplicacions i Ús de l'XML</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">Qui l'utilitza?</h3>
+                    <ul class="bullet-list">
+                        <li>Els servidors web emmagatzemen dades com a fitxers XML.</li>
+                        <li>Les Bases de Dades a vegades retornen resultats en XML.</li>
+                        <li>Els <strong>Web Services</strong> (SOAP) utilitzen XML per comunicar-se.</li>
+                        <li>És el format base per a <strong>RSS</strong> (News i Podcasts).</li>
+                        <li>Format base per a gràfics (SVG), matemàtiques (MathML) i música.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Per què s'utilitza?</h3>
+                    <ul class="bullet-list">
+                        <li>Permet la lectura i enviament de múltiples dades alhora sense haver de parsejar Strings concatenats complexos.</li>
+                        <li>Separa les dades de la visualització: El HTML es pot fer dinàmic llegint un fitxer XML extern amb JS i omplint la web, en comptes de reescriure HTML cada cop.</li>
+                        <li><strong>Simplifica l'intercanvi:</strong> Format de text pla (plain text) llegible per sistemes incompatibles entre ells (Windows, Linux, Mac, Mòbils).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Estructura i Regles -->
+    <section class="slide">
+        <h2 class="slide-title">3. Estructura i Regles Sintàctiques</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">L'Estructura d'un XML</h3>
+<pre>
+<span class="com">&lt;!-- XML Prolog --&gt;</span>
+<span class="tag">&lt;?xml</span> <span class="attr">version</span>=<span class="str">"1.0"</span> <span class="attr">encoding</span>=<span class="str">"UTF-8"</span><span class="tag">?&gt;</span> 
+
+<span class="com">&lt;!-- Root element (Element Arrel Únic) --&gt;</span>
+<span class="tag">&lt;note</span> <span class="attr">private</span>=<span class="str">"true"</span><span class="tag">&gt;</span> 
+  <span class="tag">&lt;from&gt;</span>Alice Smith<span class="tag">&lt;/from&gt;</span>
+  <span class="tag">&lt;to&gt;</span>Robert Jones<span class="tag">&lt;/to&gt;</span>
+  <span class="tag">&lt;message&gt;</span>Don't forget me!<span class="tag">&lt;/message&gt;</span>
+<span class="tag">&lt;/note&gt;</span>
+</pre>
+                    <p>Tot document ha de tenir <strong>un sol</strong> element arrel que envolti tota la resta.</p>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Regles Estrictes</h3>
+                    <ul class="bullet-list" style="font-size: 18px;">
+                        <li><strong>Tancament obligatori:</strong> <code>&lt;p&gt;Text&lt;/p&gt;</code>. (A diferència del HTML on <code>&lt;br&gt;</code> pot anar sol, en XML ha de ser <code>&lt;br/&gt;</code>).</li>
+                        <li><strong>Case Sensitive:</strong> <code>&lt;Letter&gt;</code> és diferent de <code>&lt;letter&gt;</code>.</li>
+                        <li><strong>Aniuament correcte:</strong> <code>&lt;b&gt;&lt;i&gt;Text&lt;/i&gt;&lt;/b&gt;</code> és correcte. Entrecreuar etiquetes donarà error.</li>
+                        <li><strong>Atributs amb cometes:</strong> <code>&lt;note date="12/11/2007"&gt;</code>.</li>
+                        <li><strong>Caràcters Especials:</strong> No es pot posar <code>&lt;</code> al text lliurement. Cal usar Entitats: <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;amp;</code>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: Elements vs Atributs -->
+    <section class="slide">
+        <h2 class="slide-title">4. Disseny: Elements vs Atributs</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <p>L'XML permet representar la mateixa dada de dues maneres:</p>
+                    
+                    <h3 class="xml-sub">1. Com a Atribut</h3>
+<pre>
+<span class="tag">&lt;person</span> <span class="attr">sex</span>=<span class="str">"female"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;firstname&gt;</span>Anna<span class="tag">&lt;/firstname&gt;</span>
+  <span class="tag">&lt;lastname&gt;</span>Smith<span class="tag">&lt;/lastname&gt;</span>
+<span class="tag">&lt;/person&gt;</span>
+</pre>
+                    <h3 class="xml-sub">2. Com a Element (Node fill)</h3>
+<pre>
+<span class="tag">&lt;person&gt;</span>
+  <span class="tag">&lt;sex&gt;</span>female<span class="tag">&lt;/sex&gt;</span>
+  <span class="tag">&lt;firstname&gt;</span>Anna<span class="tag">&lt;/firstname&gt;</span>
+  <span class="tag">&lt;lastname&gt;</span>Smith<span class="tag">&lt;/lastname&gt;</span>
+<span class="tag">&lt;/person&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Quan usar cadascun?</h3>
+                    <p>En els dos casos es proporciona la mateixa informació. Com a regla de disseny general:</p>
+                    <ul class="bullet-list">
+                        <li>Les informacions més llargues i complexes (que poden contenir sub-dades) es transformen en <strong>Elements</strong>.</li>
+                        <li>Els detalls més petits i les <strong>meta-dades</strong> (informació sobre la dada principal, tipus simples com ID, tipus d'arxiu, etc.) es transformen en <strong>Atributs</strong>.</li>
+                    </ul>
+                    <div class="info-box">
+                        Exemple d'Atribut per metadada: <br>
+                        <code>&lt;file type="gif"&gt;computer.gif&lt;/file&gt;</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: L'Arbre DOM-XML -->
+    <section class="slide">
+        <h2 class="slide-title">5. Accedir a l'Arbre DOM-XML</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <p>El concepte clau: <strong>L'XML té un DOM idèntic al del HTML</strong>. Es compon de nodes pare, fills i germans.</p>
+<pre>
+<span class="tag">&lt;categories&gt;</span>
+  <span class="tag">&lt;category&gt;</span>children<span class="tag">&lt;/category&gt;</span>
+  <span class="tag">&lt;category&gt;</span>computers<span class="tag">&lt;/category&gt;</span>
+<span class="tag">&lt;/categories&gt;</span>
+</pre>
+                    <div class="modern-box">
+                        <h4><i class="fa-brands fa-js"></i> Propietats Històriques a recordar</h4>
+                        <p>Al DOM d'XML "pur", el text de dins d'un tag es considerava un fill en si mateix (un TextNode). Per arribar al text d'un node calia fer:<br>
+                        <code>node.firstChild.nodeValue</code></p>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Mapa de Navegació</h3>
+                    <div class="tree-box" style="line-height: 1.8;">
+                        <code>ajax.responseXML</code><br>
+                        &nbsp;└─ <span class="tree-prop">firstChild</span> &rarr; <span class="tree-tag">&lt;categories&gt;</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;├─ <span class="tree-prop">firstChild</span> &rarr; <span class="tree-tag">&lt;category&gt;</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└─ <span class="tree-prop">firstChild</span> &rarr; <span class="tree-txt">"children"</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;│<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="tree-prop">nextSibling</span> &rarr; <span class="tree-tag">&lt;category&gt;</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="tree-prop">firstChild</span> &rarr; <span class="tree-txt">"computers"</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- ======================================================= -->
+<!-- DIAPOSITIVA: PRÒLEG I VALIDACIÓ (SCHEMA/XSD)            -->
+<!-- ======================================================= -->
+<section class="slide">
+    <h2 class="slide-title">6. Pròleg i Validació Estricta (Schema)</h2>
+    <div class="content-area">
+        <p>Tot XML ben format comença amb el <strong>pròleg</strong> (<code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;</code>). A més, l'ecosistema XML permet usar un <strong>Schema (XSD)</strong> per validar que l'estructura i els tipus de dades siguin 100% correctes abans de processar-los.</p>
+        
+        <div class="two-column" style="margin-top: 20px;">
+            <div class="col">
+                <h3 class="xml-sub">1. Les Dades (XML)</h3>
+<pre><span class="tag">&lt;?xml</span> <span class="attr">version</span>=<span class="str">"1.0"</span> <span class="attr">encoding</span>=<span class="str">"UTF-8"</span><span class="tag">?&gt;</span>
+<span class="tag">&lt;alumne&gt;</span>
+    <span class="tag">&lt;nom&gt;</span>Anna<span class="tag">&lt;/nom&gt;</span>
+    <span class="tag">&lt;nota&gt;</span>8.5<span class="tag">&lt;/nota&gt;</span>
+<span class="tag">&lt;/alumne&gt;</span></pre>
+            </div>
+            <div class="col">
+                <h3 class="xml-sub">2. Les Regles (XSD)</h3>
+<pre><span class="tag">&lt;xs:schema</span> <span class="attr">xmlns:xs</span>=<span class="str">"http://www.w3.org/2001/XMLSchema"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;xs:element</span> <span class="attr">name</span>=<span class="str">"alumne"</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;xs:complexType&gt;</span>
+            <span class="tag">&lt;xs:sequence&gt;</span>
+                <span class="tag">&lt;xs:element</span> <span class="attr">name</span>=<span class="str">"nom"</span> <span class="attr">type</span>=<span class="str">"xs:string"</span><span class="tag">/&gt;</span>
+                <span class="tag">&lt;xs:element</span> <span class="attr">name</span>=<span class="str">"nota"</span> <span class="attr">type</span>=<span class="str">"xs:decimal"</span><span class="tag">/&gt;</span>
+            <span class="tag">&lt;/xs:sequence&gt;</span>
+        <span class="tag">&lt;/xs:complexType&gt;</span>
+    <span class="tag">&lt;/xs:element&gt;</span>
+<span class="tag">&lt;/xs:schema&gt;</span></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ======================================================= -->
+<!-- DIAPOSITIVA: PLANTILLA PER GENERAR HTML (XSLT)          -->
+<!-- ======================================================= -->
+<section class="slide">
+    <h2 class="slide-title">7. Plantilles XML: Transformació a HTML (XSLT)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="col">
+                <p>Per generar HTML directament des d'un document XML, l'estàndard natiu és <strong>XSLT (Extensible Stylesheet Language Transformations)</strong>.</p>
+                
+                <div class="modern-box">
+                    <h4><i class="fa-solid fa-wand-magic-sparkles"></i> Com funciona?</h4>
+                    <p>Actua com una plantilla on definim, mitjançant etiquetes com <code>&lt;xsl:template&gt;</code>, com s'ha de renderitzar cada element de l'arbre XML original cap al nou format (HTML).</p>
+                </div>
+            </div>
+            <div class="col">
+                <h3 class="xml-sub">Exemple de full d'estils XSLT</h3>
+<pre><span class="tag">&lt;?xml</span> <span class="attr">version</span>=<span class="str">"1.0"</span> <span class="attr">encoding</span>=<span class="str">"UTF-8"</span><span class="tag">?&gt;</span>
+<span class="tag">&lt;xsl:stylesheet</span> <span class="attr">version</span>=<span class="str">"1.0"</span> <span class="attr">xmlns:xsl</span>=<span class="str">"http://www.w3.org/1999/XSL/Transform"</span><span class="tag">&gt;</span>
+  
+    <span class="com">&lt;!-- Plantilla per l'element arrel --&gt;</span>
+    <span class="tag">&lt;xsl:template</span> <span class="attr">match</span>=<span class="str">"/alumne"</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;html&gt;</span>
+            <span class="tag">&lt;body&gt;</span>
+                <span class="tag">&lt;h2&gt;</span>Expedient Acadèmic<span class="tag">&lt;/h2&gt;</span>
+                <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"perfil"</span><span class="tag">&gt;</span>
+                    <span class="tag">&lt;p&gt;&lt;strong&gt;</span>Alumne:<span class="tag">&lt;/strong&gt;</span> <span class="tag">&lt;xsl:value-of</span> <span class="attr">select</span>=<span class="str">"nom"</span><span class="tag">/&gt;&lt;/p&gt;</span>
+                    <span class="tag">&lt;p&gt;&lt;strong&gt;</span>Nota:<span class="tag">&lt;/strong&gt;</span> <span class="tag">&lt;xsl:value-of</span> <span class="attr">select</span>=<span class="str">"nota"</span><span class="tag">/&gt;&lt;/p&gt;</span>
+                <span class="tag">&lt;/div&gt;</span>
+            <span class="tag">&lt;/body&gt;</span>
+        <span class="tag">&lt;/html&gt;</span>
+    <span class="tag">&lt;/xsl:template&gt;</span>
+
+<span class="tag">&lt;/xsl:stylesheet&gt;</span></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+    <!-- SLIDE 7: JS i el DOM d'XML -->
+    <section class="slide">
+        <h2 class="slide-title">8. JavaScript i els Nodes XML</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">Propietats del DOM XML (Llistat complet)</h3>
+                    <ul class="bullet-list" style="font-size: 18px;">
+                        <li><strong>Propietats:</strong> <code>nodeName</code>, <code>nodeType</code>, <code>nodeValue</code>, <code>attributes</code>, <code>firstChild</code>, <code>lastChild</code>, <code>childNodes</code>, <code>nextSibling</code>, <code>previousSibling</code>, <code>parentNode</code>.</li>
+                        <li><strong>Mètodes:</strong> <code>getElementsByTagName</code>, <code>getAttribute</code>, <code>hasChildNodes</code>, <code>appendChild</code>, <code>removeChild</code>.</li>
+                    </ul>
+                    <div class="tree-bad" style="padding: 10px; margin-top:10px;">
+                        <p style="margin:0; font-size:16px;"><strong>Limitacions històriques respecte a l'HTML:</strong> No es podia usar <code>getElementById()</code> fàcilment (l'XML no sap què és un ID llevat que tingui DTD), ni es podia utilitzar el comodí <code>innerHTML</code> per extreure tot el contingut en format text.</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Sintaxi per recuperar Dades</h3>
+<pre>
+<span class="com">// 1. Trobar nodes per Etiqueta (Array)</span>
+<span class="kw">var</span> elms = node.<span class="fn">getElementsByTagName</span>(<span class="str">"tag"</span>);
+
+<span class="com">// 2. Recuperar el Text</span>
+<span class="kw">var</span> text = node.firstChild.nodeValue; 
+<span class="com">// O l'alternativa moderna millorada:</span>
+<span class="kw">var</span> text = node.textContent;
+
+<span class="com">// 3. Llegir Atributs</span>
+<span class="kw">var</span> attrVal = node.<span class="fn">getAttribute</span>(<span class="str">"nom_atribut"</span>);
+</pre>
+                    <div class="modern-box" style="margin-top: 10px;">
+                        <h4><i class="fa-brands fa-js"></i> JS Modern</h4>
+                        <p>Avui dia podem utilitzar Selectors CSS també en documents XML:</p>
+                        <code>node.querySelectorAll("book > title");</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: Parseig Històric (Prototype i jQuery) -->
+    <section class="slide">
+        <h2 class="slide-title">9. Parsejar XML (L'enfocament històric)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">1. Utilitzant Prototype.js (Anys 2000)</h3>
+                    <p>La llibreria retornava l'arbre a l'objecte <code>ajax.responseXML</code>.</p>
+<pre style="font-size: 13px;">
+<span class="com">// Quant guanya un advocat segons l'XML?</span>
+<span class="kw">var</span> lawyer = ajax.responseXML.<span class="fn">getElementsByTagName</span>(<span class="str">"lawyer"</span>)[<span class="val">0</span>];
+<span class="kw">var</span> salary = lawyer.<span class="fn">getAttribute</span>(<span class="str">"money"</span>); <span class="com">// "99999.00"</span>
+
+<span class="com">// Trobar el càrrec d'un treballador aniuat</span>
+<span class="kw">var</span> emps = ajax.responseXML.<span class="fn">getElementsByTagName</span>(<span class="str">"employee"</span>);
+<span class="kw">var</span> pos = emps[<span class="val">0</span>].<span class="fn">getElementsByTagName</span>(<span class="str">"job_position"</span>)[<span class="val">0</span>]
+                 .<span class="fn">getAttribute</span>(<span class="str">"model"</span>); <span class="com">// "director"</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">2. Utilitzant jQuery (Més fàcil)</h3>
+                    <p>jQuery permetia parsejar el document i fer "find" ràpidament.</p>
+<pre style="font-size: 13px;">
+<span class="fn">$</span>.<span class="fn">ajax</span>({
+  type: <span class="str">"GET"</span>,
+  url: <span class="str">"BookList.xml"</span>,
+  dataType: <span class="str">"xml"</span>,
+  success: <span class="kw">function</span>(xml) {
+    <span class="com">// Iterar sobre cada node &lt;Book&gt;</span>
+    <span class="fn">$</span>(xml).<span class="fn">find</span>(<span class="str">'Book'</span>).<span class="fn">each</span>(<span class="kw">function</span>() {
+      <span class="kw">var</span> titol = <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">find</span>(<span class="str">'Title'</span>).<span class="fn">text</span>();
+      <span class="kw">var</span> pub = <span class="fn">$</span>(<span class="kw">this</span>).<span class="fn">find</span>(<span class="str">'Publisher'</span>).<span class="fn">text</span>();
+      
+      <span class="fn">$</span>(<span class="str">"&lt;li&gt;&lt;/li&gt;"</span>).<span class="fn">html</span>(titol + <span class="str">", "</span> + pub)
+                   .<span class="fn">appendTo</span>(<span class="str">"#dvContent ul"</span>);
+    });
+  }
+});
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: Sense Llibreries -->
+    <section class="slide">
+        <h2 class="slide-title">10. Vanilla JS (Sense llibreries)</h2>
+        <div class="content-area">
+            <p>Aquest és l'exemple clàssic del Catàleg de CDs d'Ajax pur.</p>
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="xml-sub">L'XML (cd_catalog.xml)</h3>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;CATALOG&gt;</span>
+  <span class="tag">&lt;CD&gt;</span>
+    <span class="tag">&lt;TITLE&gt;</span>Empire Burlesque<span class="tag">&lt;/TITLE&gt;</span>
+    <span class="tag">&lt;ARTIST&gt;</span>Bob Dylan<span class="tag">&lt;/ARTIST&gt;</span>
+  <span class="tag">&lt;/CD&gt;</span>
+  <span class="tag">&lt;CD&gt;</span>
+    <span class="tag">&lt;TITLE&gt;</span>Hide your heart<span class="tag">&lt;/TITLE&gt;</span>
+    <span class="tag">&lt;ARTIST&gt;</span>Bonnie Tyler<span class="tag">&lt;/ARTIST&gt;</span>
+  <span class="tag">&lt;/CD&gt;</span>
+<span class="tag">&lt;/CATALOG&gt;</span>
+</pre>
+                </div>
+                <div class="col">
+                    <h3 class="xml-sub">Codi Client JavaScript (El llarg)</h3>
+<pre style="font-size: 13px;">
+<span class="kw">var</span> xmlhttp = <span class="kw">new</span> <span class="fn">XMLHttpRequest</span>();
+xmlhttp.<span class="fn">open</span>(<span class="str">"GET"</span>, <span class="str">"cd_catalog.xml"</span>, <span class="kw">false</span>); <span class="com">// Síncron</span>
+xmlhttp.<span class="fn">send</span>();
+
+<span class="kw">var</span> xmlDoc = xmlhttp.responseXML;
+<span class="kw">var</span> x = xmlDoc.<span class="fn">getElementsByTagName</span>(<span class="str">"CD"</span>);
+
+document.<span class="fn">write</span>(<span class="str">"&lt;table border='1'&gt;"</span>);
+<span class="kw">for</span> (<span class="kw">var</span> i=<span class="val">0</span>; i&lt;x.length; i++) {
+  document.<span class="fn">write</span>(<span class="str">"&lt;tr&gt;&lt;td&gt;"</span>);
+  document.<span class="fn">write</span>(x[i].<span class="fn">getElementsByTagName</span>(<span class="str">"ARTIST"</span>)[<span class="val">0</span>].childNodes[<span class="val">0</span>].nodeValue);
+  document.<span class="fn">write</span>(<span class="str">"&lt;/td&gt;&lt;td&gt;"</span>);
+  document.<span class="fn">write</span>(x[i].<span class="fn">getElementsByTagName</span>(<span class="str">"TITLE"</span>)[<span class="val">0</span>].childNodes[<span class="val">0</span>].nodeValue);
+  document.<span class="fn">write</span>(<span class="str">"&lt;/td&gt;&lt;/tr&gt;"</span>);
+}
+document.<span class="fn">write</span>(<span class="str">"&lt;/table&gt;"</span>);
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- ======================================================= -->
+<!-- DIAPOSITIVA: JS MODERN (DOMParser)                      -->
+<!-- ======================================================= -->
+<section class="slide">
+    <h2 class="slide-title">11.Parsejar XML amb JS: La Versió Actual</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="col">
+                <p>Avui en dia, la forma estàndard i moderna per convertir una cadena de text XML en un document manipulable és utilitzant la classe nativa <code>DOMParser</code>.</p>
+                
+                <div class="modern-box">
+                    <h4><i class="fa-brands fa-js"></i> El poder del DOM Modern</h4>
+                    <p>Un cop parsejat, l'objecte resultant és un <strong>XMLDocument</strong>. Això significa que podem oblidar-nos de navegar node a node manualment i utilitzar els selectors CSS que ja coneixem (com <code>querySelector()</code>).</p>
+                </div>
+            </div>
+            <div class="col">
+                <h3 class="xml-sub">Codi JS (DOMParser)</h3>
+<pre style="font-size: 13px;"><span class="com">// 1. Text XML (ex: resposta d'un fetch)</span>
+<span class="kw">const</span> xmlString = <span class="str">`&lt;dades&gt;
+    &lt;element id="1"&gt;Informació clau&lt;/element&gt;
+&lt;/dades&gt;`</span>;
+
+<span class="com">// 2. Instanciem el parser</span>
+<span class="kw">const</span> parser = <span class="kw">new</span> <span class="fn">DOMParser</span>();
+
+<span class="com">// 3. Parsejem indicant el tipus MIME</span>
+<span class="kw">const</span> xmlDoc = parser.<span class="fn">parseFromString</span>(xmlString, <span class="str">"application/xml"</span>);
+
+<span class="com">// 4. Usem selectors moderns per extreure text!</span>
+<span class="kw">const</span> text = xmlDoc.<span class="fn">querySelector</span>(<span class="str">"element[id='1']"</span>).textContent;
+
+console.<span class="fn">log</span>(text); <span class="com">// "Informació clau"</span></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+    <!-- SLIDE 11: PHP Servidor i DOMDocument -->
+    <section class="slide">
+        <h2 class="slide-title php-title">12. PHP: L'Escriptura d'XML</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="php-sub">La classe DOMDocument de PHP</h3>
+                    <p>Molt semblant al JS, PHP construeix el document per parts (Nodes):</p>
+                    <ul class="bullet-list" style="font-size: 16px;">
+                        <li><code>createElement(tag)</code>: Crea un nou element XML.</li>
+                        <li><code>createTextNode(text)</code>: Crea el contingut de l'element.</li>
+                        <li><code>setAttribute(name, value)</code>: Defineix atributs.</li>
+                        <li><code>appendChild(node)</code>: L'uneix a l'arbre principal.</li>
+                        <li><code>saveXML()</code>: Retorna o imprimeix l'XML complet construït, incloent-hi el pròleg `&lt;?xml version="1.0"?&gt;`.</li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h3 class="php-sub">Construint Nodes d'un Llibre</h3>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;?php</span>
+<span class="com">// Amb codificació per suportar caràcters espanyols/catalans</span>
+<span class="kw">$xmldoc</span> = <span class="kw">new</span> <span class="fn">DOMDocument</span>(<span class="str">'1.0'</span>, <span class="str">'UTF-8'</span>);
+
+<span class="com">// Root Element &lt;books&gt;</span>
+<span class="kw">$books_tag</span> = <span class="kw">$xmldoc</span>-&gt;<span class="fn">createElement</span>(<span class="str">"books"</span>);
+<span class="kw">$xmldoc</span>-&gt;<span class="fn">appendChild</span>(<span class="kw">$books_tag</span>);
+
+<span class="com">// Sub-element &lt;book&gt;</span>
+<span class="kw">$book_tag</span> = <span class="kw">$xmldoc</span>-&gt;<span class="fn">createElement</span>(<span class="str">"book"</span>); 
+<span class="kw">$book_tag</span>-&gt;<span class="fn">setAttribute</span>(<span class="str">"title"</span>, <span class="str">"Harry Potter"</span>); 
+<span class="kw">$book_tag</span>-&gt;<span class="fn">setAttribute</span>(<span class="str">"author"</span>, <span class="str">"J.K Rowling"</span>);
+
+<span class="kw">$books_tag</span>-&gt;<span class="fn">appendChild</span>(<span class="kw">$book_tag</span>);
+
+<span class="com">// Imprimir cap al client (AJAX ho rebrà)</span>
+<span class="kw">print</span> <span class="kw">$xmldoc</span>-&gt;<span class="fn">saveXML</span>();
+<span class="tag">?&gt;</span>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 14: PHP Com a Lector (getcd.php) -->
+    <section class="slide">
+        <h2 class="slide-title php-title">13. PHP: Servidor i DOMElement (Lector)</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <h3 class="php-sub">Com interactuar amb nodes en PHP?</h3>
+                    <p>La classe <code>DOMElement</code> representa cada node i té mètodes calcats al JavaScript antic: <code>tagName</code>, <code>nodeValue</code>, <code>parentNode</code>, <code>childNodes</code>.</p>
+                    <p>Podem utilitzar-ho per fer que PHP llegeixi un fitxer XML del disc (<code>load()</code>), el filtri, i només retorni l'HTML al client.</p>
+                </div>
+                <div class="col">
+                    <h3 class="php-sub">El Servidor <code>getcd.php</code> de l'exemple</h3>
+<pre style="font-size: 13px;">
+<span class="tag">&lt;?php</span>
+<span class="kw">$q</span> = <span class="kw">$_GET</span>[<span class="str">"q"</span>];
+<span class="kw">$xmlDoc</span> = <span class="kw">new</span> <span class="fn">DOMDocument</span>();
+<span class="kw">$xmlDoc</span>-&gt;<span class="fn">load</span>(<span class="str">"cd_catalog.xml"</span>);
+<span class="kw">$x</span> = <span class="kw">$xmlDoc</span>-&gt;<span class="fn">getElementsByTagName</span>(<span class="str">'ARTIST'</span>);
+
+<span class="kw">for</span> (<span class="kw">$i</span>=<span class="val">0</span>; <span class="kw">$i</span>&lt;=<span class="kw">$x</span>-&gt;length-<span class="val">1</span>; <span class="kw">$i</span>++) {
+  <span class="com">// Processar només si és element (nodeType == 1)</span>
+  <span class="kw">if</span> (<span class="kw">$x</span>-&gt;<span class="fn">item</span>(<span class="kw">$i</span>)-&gt;nodeType==<span class="val">1</span>) {
+    <span class="kw">if</span> (<span class="kw">$x</span>-&gt;<span class="fn">item</span>(<span class="kw">$i</span>)-&gt;childNodes-&gt;<span class="fn">item</span>(<span class="val">0</span>)-&gt;nodeValue == <span class="kw">$q</span>) {
+      <span class="com">// Trobat! Anem cap al pare &lt;CD&gt; per llegir-ho tot</span>
+      <span class="kw">$y</span> = (<span class="kw">$x</span>-&gt;<span class="fn">item</span>(<span class="kw">$i</span>)-&gt;parentNode);
+      <span class="com">... echo del HTML basat en els nodes del CD</span>
+    }
+  }
+}
+<span class="tag">?&gt;</span>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 15: Quiz & Validació -->
+    <section class="slide">
+        <h2 class="slide-title">14. Autoavaluació: Conceptes XML</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div class="col">
+                    <p style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">Comprova el que saps sobre les regles del llenguatge XML.</p>
+                    
+                    <details class="quiz">
+                        <summary>Quin error greu hi ha en aquesta línia? <br><code>&lt;nota data=10/05/2018&gt;</code></summary>
+                        <div class="answer">Tots els atributs de l'XML han d'anar obligatòriament entre cometes dobles o simples ("10/05/2018"). A HTML5 això es perdonava, a XML llençarà un error fatal de parseig.</div>
+                    </details>
+                    
+                    <details class="quiz">
+                        <summary>Quin seria el resultat del següent codi? <br><code>&lt;MESSage&gt;Hello&lt;/message&gt;</code></summary>
+                        <div class="answer">Error d'etiquetes no coincidents. A l'XML, els tags són estrictament "Case Sensitive" (sensibles a majúscules/minúscules). El tag d'inici i tancament han de ser completament idèntics.</div>
+                    </details>
+                </div>
+                <div class="col">
+                    <details class="quiz">
+                        <summary>Com escrivim una condició amb el símbol 'Menor que' (&lt;) com "A < B"?</summary>
+                        <div class="answer">El parser interpretarà <code>&lt;</code> com l'inici d'una nova etiqueta. Cal utilitzar l'entitat HTML corresponent: <code>A &amp;lt; B</code>.</div>
+                    </details>
+
+                    <details class="quiz">
+                        <summary>Com accedim en JavaScript Vanilla al contingut de text d'un Node de forma moderna?</summary>
+                        <div class="answer">
+                            Antigament es feia: <code>node.firstChild.nodeValue</code>.<br>
+                            L'API moderna recomanada és: <code>node.textContent</code>.
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 16: LAB (Parseig DOM Modern) -->
+    <section class="slide">
+        <h2 class="slide-title">LAB 1: Parseig d'XML natiu <i class="fa-solid fa-flask" style="color: var(--accent-orange);"></i></h2>
+        <div class="content-area">
+            <p>Ja no necessitem jQuery per processar XML amb facilitat. La web moderna incorpora <code>DOMParser</code> i selectors CSS. Modifica el codi JS per extreure també l'Atribut de <code>category</code> i mostrar-lo!</p>
+            <div class="lab-container">
+                <div class="lab-editors">
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#9a3412;">String XML Simulat (com si vingués d'AJAX)</div>
+                        <textarea class="lab-editor" id="html-1" spellcheck="false" style="color:#f97316;">
+<?xml version="1.0" encoding="UTF-8"?>
+<bookstore>
+  <book category="cooking">
+    <title lang="en">Everyday Italian</title>
+    <author>Giada De Laurentiis</author>
+    <price>30.00</price>
+  </book>
+  <book category="children">
+    <title lang="en">Harry Potter</title>
+    <author>J K. Rowling</author>
+    <price>29.99</price>
+  </book>
+</bookstore>
+</textarea>
+                    </div>
+                    <div class="lab-pane">
+                        <div class="lab-label" style="background:#0284c7;">JavaScript (Fetch & DOMParser)</div>
+                        <textarea class="lab-editor" id="js-1" spellcheck="false" style="color:#7dd3fc;">
+// 1. Simulem rebre el text XML de l'esquerra
+const xmlString = document.getElementById("html-1").value;
+
+// 2. Parseig Modern Nadiu (Sense jQuery ni eval)
+const parser = new DOMParser();
+const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+// 3. Utilitzem querySelectorAll dins de l'XML!
+const llibres = xmlDoc.querySelectorAll("book");
+
+// 4. Generem HTML
+let resultatHTML = "<ul>";
+llibres.forEach(llibre => {
+   const titol = llibre.querySelector("title").textContent;
+   const autor = llibre.querySelector("author").textContent;
+   
+   resultatHTML += `<li><b>${titol}</b> escrit per ${autor}</li>`;
+});
+resultatHTML += "</ul>";
+
+document.body.innerHTML = resultatHTML;
+</textarea>
+                    </div>
+                </div>
+                <div class="lab-controls">
+                    <button class="btn-run" onclick="runLab(1)"><i class="fa-solid fa-play"></i> Convertir XML a HTML</button>
+                </div>
+                <iframe id="out-1" class="lab-output"></iframe>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- Controls Navegació -->
+<div id="controls">
+    <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+    <div id="progress">Diapositiva 1 / 15</div>
+    <button class="ctrl-btn" id="btn-next">Següent <i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Lògica Presentació i Laboratoris -->
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const progress = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((s, index) => {
+            s.classList.remove('active');
+            if (index === currentSlide) s.classList.add('active');
+        });
+        progress.innerText = `Diapositiva ${currentSlide + 1} / ${slides.length}`;
+        
+        // Auto-run de laboratoris
+        if(currentSlide === 16) runLabIfEmpty(1);
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentSlide > 0) { currentSlide--; updateSlides(); }
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            if (currentSlide < slides.length - 1) { currentSlide++; updateSlides(); }
+        } else if (e.key === 'ArrowLeft') {
+            if (currentSlide > 0) { currentSlide--; updateSlides(); }
+        }
+    });
+
+    // Sistema de Laboratoris amb avaluació segura de JS i Iframe
+    function runLab(id) {
+        const jsInput = document.getElementById('js-' + id);
+        const htmlInput = document.getElementById('html-' + id);
+        const js = jsInput ? jsInput.value : '';
+        const html = htmlInput ? htmlInput.value : '';
+        const iframe = document.getElementById('out-' + id);
+        
+        const encodedJs = encodeURIComponent(js);
+        const encodedHtml = encodeURIComponent(html);
+        const sOpen = "<script";
+        const sClose = "</" + "script>";
+        
+        const content = `
+            <!DOCTYPE html>
+            <html lang="ca">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #1e293b; background: #f8fafc; margin:0; font-size:18px;}
+                </style>
+            </head>
+            <body>
+                <div id="wrapper">L'HTML resultant s'imprimirà aquí...</div>
+                ${sOpen}>
+                    window.onload = function() {
+                        try {
+                            // Mirror the XML textarea inside the iframe so lab code can access #html-{id}
+                            const rawHtml = decodeURIComponent("${encodedHtml}");
+                            const xmlSource = document.createElement("textarea");
+                            xmlSource.id = "html-${id}";
+                            xmlSource.style.display = "none";
+                            xmlSource.value = rawHtml;
+                            document.body.appendChild(xmlSource);
+
+                            const rawJs = decodeURIComponent("${encodedJs}");
+                            if (rawJs.trim().length > 0) {
+                                const executeCode = new Function(rawJs);
+                                executeCode();
+                            }
+                        } catch(e) {
+                            document.body.innerHTML += '<div style="color:red; margin-top:10px; padding:10px; border:1px solid #fca5a5; background:#fee2e2; border-radius:4px;"><b>Error JS:</b> ' + e.message + '</div>';
+                        }
+                    };
+                ${sClose}
+            </body>
+            </html>
+        `;
+        
+        iframe.srcdoc = content;
+    }
+
+    function runLabIfEmpty(id) {
+        const iframe = document.getElementById('out-' + id);
+        if (!iframe.srcdoc || iframe.srcdoc === "") {
+            runLab(id);
+        }
+    }
+
+    updateSlides();
+</script>
+
+</body>
+</html>

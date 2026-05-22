@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta d'Hotels (XML API)</title>
+    <!-- Bootstrap per al disseny responsive -->
+    <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+    <!-- Fulls d'estil personalitzats -->
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-header {
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #facc15;
+        }
+        .btn-load {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        #taulaHotelsContainer {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="index.html">
+                    <span class="glyphicon glyphicon-home"></span> Hotel Paradise
+                </a>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="client.php">Reservar</a></li>
+                <li class="active"><a href="admin.html">Hotels (AJAX/XML)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="admin-header">
+            <h1><span class="glyphicon glyphicon-bed"></span> Directori d'Hotels (XML)</h1>
+            <p class="text-muted">Aquesta pàgina empra <strong>AJAX</strong> per recuperar l'oferta hotelera via <strong>XML</strong>, cridant a <code>api.php</code>.</p>
+        </div>
+
+        <button id="btnLoadHotels" class="btn btn-warning btn-lg btn-load">
+            <span class="glyphicon glyphicon-cloud-download"></span> Carregar Llista d'Hotels
+        </button>
+        <hr>
+
+        <div id="loading" style="display: none;" class="text-warning">
+            <strong><span class="glyphicon glyphicon-refresh"></span> LLegint XML de l'API...</strong>
+        </div>
+
+        <div id="taulaHotelsContainer" class="panel panel-warning" style="border-color: #faebcc;">
+            <div class="panel-heading" style="background-color: #fcf8e3; color: #8a6d3b; border-color: #faebcc;">
+                <strong>Hotels Disponibles (<span id="hotelsCount">0</span>)</strong>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="taulaHotels">
+                    <thead>
+                        <tr>
+                            <th>Identificador</th>
+                            <th>Nom Hotel</th>
+                            <th>Ciutat</th>
+                            <th>Estrelles</th>
+                            <th>Té Piscina?</th>
+                            <th>Preu Nit (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyHotels">
+                        <!-- Iteracions DOM afegides via JS i XML Parser -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('btnLoadHotels').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const btn = this;
+            const container = document.getElementById('taulaHotelsContainer');
+            const tbody = document.getElementById('tbodyHotels');
+            const loading = document.getElementById('loading');
+            
+            btn.disabled = true;
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+            
+            // Connexió AJAX mitjançant fetch
+            fetch('api.php')
+                // Llegim la resposta en format de text (XML cru)
+                .then(response => response.text())
+                .then(str => {
+                    // Implementació d'un Parser per convertir String a XML Document
+                    const parser = new window.DOMParser();
+                    const xmlDoc = parser.parseFromString(str, "text/xml");
+                    
+                    const status = xmlDoc.getElementsByTagName("status")[0].childNodes[0].nodeValue;
+                    
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    
+                    if (status === 'success') {
+                        const count = xmlDoc.getElementsByTagName("count")[0].childNodes[0].nodeValue;
+                        document.getElementById('hotelsCount').innerText = count;
+                        
+                        const hotels = xmlDoc.getElementsByTagName("hotel");
+                        
+                        // Recorrem els nodes de l'XML
+                        for (let i = 0; i < hotels.length; i++) {
+                            let hotel = hotels[i];
+                            let id = hotel.getAttribute("id");
+                            let name = hotel.getElementsByTagName("name")[0].childNodes[0].nodeValue;
+                            let city = hotel.getElementsByTagName("city")[0].childNodes[0].nodeValue;
+                            let stars = hotel.getElementsByTagName("stars")[0].childNodes[0].nodeValue;
+                            let hasPool = hotel.getElementsByTagName("has_pool")[0].childNodes[0].nodeValue;
+                            let price = hotel.getElementsByTagName("price")[0].childNodes[0].nodeValue;
+                            
+                            const tr = document.createElement('tr');
+                            let poolText = hasPool == "1" ? "Sí" : "No";
+                            let starsText = "⭐".repeat(parseInt(stars));
+                            
+                            tr.innerHTML = `
+                                <td>#${id}</td>
+                                <td><strong>${name}</strong></td>
+                                <td>${city}</td>
+                                <td>${starsText} (${stars})</td>
+                                <td>${poolText}</td>
+                                <td>${parseFloat(price).toFixed(2)} €</td>
+                            `;
+                            
+                            tbody.appendChild(tr);
+                        }
+                        
+                        container.style.display = 'block';
+                    } else {
+                        const message = xmlDoc.getElementsByTagName("message")[0].childNodes[0].nodeValue;
+                        alert('Error carregant hotels: ' + message);
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    alert('Error en la connexió d\'AJAX: ' + error.message);
+                });
+        });
+    </script>
+</body>
+</html>
